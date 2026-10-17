@@ -236,3 +236,82 @@ def test_end_to_end_planted_regression_job(tmp_path: Path, monkeypatch: pytest.M
         assert completed["result"]["status"] == "found"
         assert completed["result"]["first_bad_commit"] == commits[regression_index]
         assert completed["result"]["monotonicity_verified"] is True
+
+
+def test_end_to_end_alternating_repo_non_monotonic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """E2E test: alternating history (0.95, 0.80, 0.95, 0.80, 0.95) submitted via API,
+
+    executed by worker, returns non_monotonic status with monotonicity_verified=False and
+    first_bad_commit=None.
+    """
+    db_file = tmp_path / "alternating_e2e.db"
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir(parents=True, exist_ok=True)
+    targets_file = tmp_path / "targets.toml"
+
+    # Create 5-commit alternating repo
+    alt_repo = repo_root / "alternating_model"
+    alt_repo.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["git", "init"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Tester"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "tester@example.com"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "commit.gpgSign", "false"], cwd=str(alt_repo), check=True, capture_output=True)
+
+    metrics = [0.95, 0.80, 0.95, 0.80, 0.95]
+    commits: list[str] = []
+    for i, m in enumerate(metrics):
+        (alt_repo / "eval.py").write_text(f"print('accuracy={m}')\n", encoding="utf-8")
+        (alt_repo / "v.txt").write_text(f"{i}\n", encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=str(alt_repo), check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"c{i}: {m}"], cwd=str(alt_repo), check=True, capture_output=True)
+        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(alt_repo), check=True, capture_output=True, text=True)
+        commits.append(out.stdout.strip())
+
+    targets_content = f"""
+    [targets.alternating_model]
+    repo_path = "{alt_repo}"
+    eval_command = "{sys.executable} eval.py"
+    metric_name = "accuracy"
+    threshold = 0.90
+    direction = "higher"
+    valid_range = [0.0, 1.0]
+    timeout = 30.0
+    repeat_count = 1
+    """
+    targets_file.write_text(targets_content, encoding="utf-8")
+
+    monkeypatch.setenv("MODEL_BISECT_DB_PATH", str(db_file))
+    monkeypatch.setenv("MODEL_BISECT_TARGETS_FILE", str(targets_file))
+    monkeypatch.setenv("MODEL_BISECT_REPO_ROOT", str(repo_root))
+
+    init_db(db_file)
+
+    with TestClient(app) as client:
+        resp = client.post(
+            "/jobs",
+            json={
+                "target": "alternating_model",
+                "good_commit": commits[0],
+                "bad_commit": commits[-1],
+            },
+        )
+        assert resp.status_code == 202
+        job_id = resp.json()["id"]
+
+        run_worker_loop(
+            poll_interval=0.1,
+            run_once=True,
+            db_path=db_file,
+            config_path=targets_file,
+            repo_root=repo_root,
+        )
+
+        fetch_resp = client.get(f"/jobs/{job_id}")
+        assert fetch_resp.status_code == 200
+        completed = fetch_resp.json()
+        assert completed["status"] == "done"
+        assert completed["result"] is not None
+        assert completed["result"]["status"] == "non_monotonic"
+        assert completed["result"]["monotonicity_verified"] is False
+        assert completed["result"]["first_bad_commit"] is None
+

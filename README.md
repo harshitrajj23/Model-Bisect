@@ -95,6 +95,19 @@ docker compose up --build
 
 ---
 
+## Demo Repositories & Verification Scripts
+
+Model Bisect provides two scripts for building sample repositories in `scripts/`:
+
+1. **Monotonic Demo Repository (`scripts/make_demo_repo.sh`)**:
+   Builds a 5-commit repository with metrics `0.95, 0.95, 0.95, 0.80, 0.80` (commits c0–c2 good, c3–c4 bad) at threshold `0.90`. Demonstrates standard regression discovery where `status="found"`, `first_bad_commit` points to commit `c3`, and `monotonicity_verified=true`.
+
+2. **Alternating Non-Monotonic Repository (`scripts/make_alternating_repo.sh`)**:
+   Builds a 5-commit repository with alternating metrics `0.95, 0.80, 0.95, 0.80, 0.95` (good, bad, good, bad, good) at threshold `0.90`. Demonstrates non-monotonic regression detection where `status="non_monotonic"`, `monotonicity_verified=false`, and `first_bad_commit=null`.
+
+---
+
+
 ## API Endpoints & Example cURL Commands
 
 ### 1. Health Check
