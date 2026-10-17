@@ -429,12 +429,16 @@ def test_eval_hangs_and_child_processes_killed(tmp_path: Path) -> None:
 
 
 def test_eval_prints_metric_twice(tmp_path: Path) -> None:
-    """Eval prints metric twice: the engine must use the last occurrence."""
+    """Eval prints metric twice: the engine must use the JSON metrics file when available."""
     repo = init_git_repo(tmp_path / "repo_twice")
 
-    # c0: prints intermediate accuracy=0.50 then final accuracy=0.98
+    # c0: prints intermediate accuracy=0.50 then writes final accuracy=0.98 to MODEL_BISECT_METRICS_FILE
     (repo / "eval.py").write_text(
+        "import os, json\n"
         "print('Epoch 1: accuracy=0.50')\n"
+        "mf = os.environ.get('MODEL_BISECT_METRICS_FILE')\n"
+        "if mf:\n"
+        "    with open(mf, 'w') as f: json.dump({'accuracy': 0.98}, f)\n"
         "print('Final: accuracy=0.98')\n"
     )
     _run_git(repo, "add", ".")
@@ -442,7 +446,11 @@ def test_eval_prints_metric_twice(tmp_path: Path) -> None:
     c0 = _run_git(repo, "rev-parse", "HEAD")
 
     (repo / "eval.py").write_text(
+        "import os, json\n"
         "print('Epoch 1: accuracy=0.95')\n"
+        "mf = os.environ.get('MODEL_BISECT_METRICS_FILE')\n"
+        "if mf:\n"
+        "    with open(mf, 'w') as f: json.dump({'accuracy': 0.70}, f)\n"
         "print('Final: accuracy=0.70')\n"
     )
     _run_git(repo, "add", ".")
@@ -467,7 +475,7 @@ def test_eval_prints_metric_twice(tmp_path: Path) -> None:
 
 
 def test_eval_invalid_metrics(tmp_path: Path) -> None:
-    """Eval prints no metric, NaN, inf, or accuracy outside [0, 1]: must be marked skipped."""
+    """Eval prints no metric, NaN, inf, or value outside valid_range: must be marked skipped."""
     repo = init_git_repo(tmp_path / "repo_invalid_metrics")
 
     (repo / "eval.py").write_text("print('accuracy=0.95')\n")
@@ -512,6 +520,7 @@ def test_eval_invalid_metrics(tmp_path: Path) -> None:
         eval_command=f"{sys.executable} eval.py",
         metric_name="accuracy",
         threshold=0.90,
+        valid_range=(0.0, 1.0),
     )
     for c in [c1, c2, c3, c4]:
         ev = next((e for e in result.evaluated_commits if e.commit == c), None)
@@ -1187,17 +1196,21 @@ def test_deterministic_identical_json(tmp_path: Path) -> None:
 
 
 def test_metric_summary_printed_last(tmp_path: Path) -> None:
-    """Pattern a: Summary metric printed last (the common case) is used by engine."""
+    """Pattern a: Summary metric written to MODEL_BISECT_METRICS_FILE is used by engine."""
     repo = init_git_repo(tmp_path / "repo_summary_last")
     (repo / "eval.py").write_text("print('accuracy=0.98')\n")
     _run_git(repo, "add", ".")
     _run_git(repo, "commit", "-m", "c0")
     c0 = _run_git(repo, "rev-parse", "HEAD")
 
-    # c1 prints epoch/step metrics followed by a final summary line
+    # c1 prints epoch/step metrics followed by writing final summary metric to JSON contract file
     script = (
+        "import os, json\n"
         "print('Epoch 1: accuracy=0.45')\n"
         "print('Epoch 2: accuracy=0.60')\n"
+        "mf = os.environ.get('MODEL_BISECT_METRICS_FILE')\n"
+        "if mf:\n"
+        "    with open(mf, 'w') as f: json.dump({'accuracy': 0.75}, f)\n"
         "print('Final: accuracy=0.75')\n"
     )
     (repo / "eval.py").write_text(script)
@@ -1217,6 +1230,66 @@ def test_metric_summary_printed_last(tmp_path: Path) -> None:
     assert result.first_bad_commit == c1
     c1_ev = next(e for e in result.evaluated_commits if e.commit == c1)
     assert c1_ev.metric == pytest.approx(0.75)
+
+
+def test_valid_range_omitted_accepts_values_outside_zero_one(tmp_path: Path) -> None:
+    """Without valid_range, only finite-number checks apply (e.g. latency or metrics > 1.0 are valid)."""
+    repo = init_git_repo(tmp_path / "repo_no_range")
+    (repo / "eval.py").write_text("print('score=150.0')\n")
+    _run_git(repo, "add", ".")
+    _run_git(repo, "commit", "-m", "c0")
+    c0 = _run_git(repo, "rev-parse", "HEAD")
+
+    (repo / "eval.py").write_text("print('score=50.0')\n")
+    _run_git(repo, "add", ".")
+    _run_git(repo, "commit", "-m", "c1")
+    c1 = _run_git(repo, "rev-parse", "HEAD")
+
+    result = bisect(
+        repo_path=repo,
+        good_commit=c0,
+        bad_commit=c1,
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="score",
+        threshold=100.0,
+        direction="higher",
+    )
+    assert result.status == "found"
+    assert result.first_bad_commit == c1
+
+
+def test_predecessor_check_budget_limit_documents_unverified(tmp_path: Path) -> None:
+    """Requirement 3: When binary search uses its full budget on a history with an early recovery,
+
+    it returns status 'found' with monotonicity_verified=False rather than falsely claiming verification.
+    """
+    repo = init_git_repo(tmp_path / "repo_pred_budget_limit")
+    # For N=8, max_budget = ceil(log2(8)) + 2 = 5
+    # Sequence: c0 (good), c1 (bad), c2 (good recovery), c3 (good), c4 (bad), c5 (bad), c6 (bad), c7 (bad)
+    # Binary search samples: c0 (good), c7 (bad), mid=3 (good), mid=5 (bad), mid=4 (bad) -> 5 evals used.
+    # The predecessor check for c2 (c1) cannot run because eval count reached 5.
+    # Result must report status 'found', first_bad_commit == c4, and monotonicity_verified == False.
+    metrics = [0.95, 0.70, 0.95, 0.95, 0.70, 0.70, 0.70, 0.70]
+    commits: list[str] = []
+    for i, m in enumerate(metrics):
+        (repo / "eval.py").write_text(f"print('accuracy={m}')\n")
+        (repo / "f.txt").write_text(f"{i}\n")
+        _run_git(repo, "add", ".")
+        _run_git(repo, "commit", "-m", f"c{i}")
+        commits.append(_run_git(repo, "rev-parse", "HEAD"))
+
+    result = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[-1],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+    )
+    assert result.status == "found"
+    assert result.first_bad_commit == commits[4]
+    assert result.monotonicity_verified is False
+    assert result.total_eval_count <= math.ceil(math.log2(8)) + 2
 
 
 def test_metric_summary_printed_first_then_samples_ambiguous(tmp_path: Path) -> None:

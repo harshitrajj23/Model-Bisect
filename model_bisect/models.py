@@ -29,3 +29,6 @@ class BisectResult(BaseModel):
     )
     total_eval_count: int = Field(default=0, description="Total number of evaluations performed")
     error_message: str | None = Field(default=None, description="Error message if status is error")
+    monotonicity_verified: bool = Field(
+        default=False, description="True only when the predecessor check ran and passed"
+    )

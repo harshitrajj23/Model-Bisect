@@ -11,7 +11,9 @@ $$\text{Budget} = \lceil \log_2(N) \rceil + 2$$
 To guard against non-monotonic histories (e.g. an earlier regression that recovered before another regression occurred), the engine performs a predecessor check on $low - 1$ when candidate $high$ is identified.
 
 ### Trade-off Analysis: Predecessor Verification vs. Eval Budget
-An unconditional predecessor check on every history would add $+1$ evaluation in worst-case branches, pushing the eval count to $\lceil \log_2(N) \rceil + 3$. Model Bisect bounds predecessor verification within the $\lceil \log_2(N) \rceil + 2$ budget (`len(eval_history) < max_budget`). When binary search finishes with spare budget (such as when the regression occurs early in the history), the predecessor is evaluated to confirm monotonicity; when the binary search has already utilized its full budget quota, the ceiling is respected. This guarantees deterministic budget compliance on all monotonic histories without requiring users to allocate additional eval compute.
+Non-monotonic detection is best-effort within the evaluation budget ($\lceil \log_2(N) \rceil + 2$). A regression that recovers can be missed when binary search uses its full budget.
+
+An unconditional predecessor check on every history would add $+1$ evaluation in worst-case branches, pushing the eval count to $\lceil \log_2(N) \rceil + 3$. Model Bisect bounds predecessor verification strictly within the $\lceil \log_2(N) \rceil + 2$ budget (`len(eval_history) < max_budget`). When binary search finishes with spare budget (such as when the regression occurs early in the history), the predecessor is evaluated to confirm monotonicity, and `monotonicity_verified` is set to `true`. When binary search has already utilized its full budget quota, the ceiling is respected, the search returns status `"found"`, and `monotonicity_verified` is set to `false` to explicitly document that non-monotonicity was not verified, rather than silently claiming full verification. This guarantees deterministic budget compliance on all monotonic histories without exceeding compute limits.
 
 ## Benchmark Results on Monotonic Histories
 

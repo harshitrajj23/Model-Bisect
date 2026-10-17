@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import os
 import re
@@ -23,28 +24,51 @@ from model_bisect.models import (
 )
 
 
+def parse_metrics_file(file_path: Path, metric_name: str) -> tuple[float | None, str | None]:
+    """Parse metric from the JSON metrics file specified by MODEL_BISECT_METRICS_FILE.
+
+    Validates that:
+    1. The file exists and is valid JSON.
+    2. The JSON is a flat or top-level dictionary/object.
+    3. The requested metric_name key exists.
+    4. The metric value is a finite number (not NaN or Inf, and not a boolean).
+    """
+    if not file_path.exists():
+        return None, "Metrics JSON file does not exist"
+    try:
+        content = file_path.read_text(encoding="utf-8")
+        data = json.loads(content)
+    except Exception as e:
+        return None, f"Failed to parse metrics JSON file: {e}"
+
+    if not isinstance(data, dict):
+        return None, "Metrics JSON file is not a JSON object"
+
+    if metric_name not in data:
+        return None, f"Metric '{metric_name}' not found in JSON metrics file"
+
+    val = data[metric_name]
+    if isinstance(val, bool) or not isinstance(val, (int, float)):
+        return None, f"Metric '{metric_name}' in JSON metrics file is not a number"
+
+    float_val = float(val)
+    if math.isnan(float_val) or math.isinf(float_val):
+        return None, f"Metric '{metric_name}' in JSON metrics file is not finite (NaN or Inf)"
+
+    return float_val, None
+
+
 def parse_metric(stdout: str, metric_name: str) -> float | None:
-    """Parse metric from stdout matching `name=value` (e.g. accuracy=0.9123).
+    """Parse metric from stdout fallback matching `name=value` (e.g. accuracy=0.9123).
 
-    Handles scientific notation, integers, and floats. Rejects NaN, Inf, and
-    accuracy values outside [0, 1].
+    Note: Stdout is treated as logs and this fallback is a convenience, not a contract.
+    The primary metric contract is the JSON file specified by MODEL_BISECT_METRICS_FILE.
 
-    Metric Resolution Rules:
-    1. Word boundary: Only matches exact metric_name followed by '='. Subwords
-       or prefixed/suffixed metric names (e.g. 'val_accuracy=0.9' when looking for
-       'accuracy', or 'accuracy=0.9' when looking for 'acc') are deliberately
-       rejected to avoid confusing distinct metrics.
-    2. Identical values: If the metric appears multiple times with identical
-       values across lines, the unambiguous value is accepted.
-    3. Final summary metric: If multiple different values appear and the final
-       occurrence is marked with summary/final indicators (or prior occurrences
-       are marked as intermediate epoch/batch/sample metrics while the last
-       occurrence is the overall summary), the final summary metric is used.
-    4. Ambiguous output: If multiple different values appear with no clear final
-       summary designation (e.g. conflicting values printed without labels, or
-       where summary is printed first followed by per-sample metrics), the metric
-       is rejected as ambiguous (returns None, marking the commit as skipped).
-       This avoids silently picking an arbitrary per-sample or conflicting value.
+    Rules for stdout fallback:
+    1. The metric must appear in the form `name=value` with exact word boundary.
+    2. If the metric appears more than once with different values, it is skipped as ambiguous.
+    3. If all occurrences have identical values (or it appears on a single line), the value is accepted.
+    4. Non-finite values (NaN, Inf) are rejected.
     """
     pattern = (
         rf"(?:^|[\s,;]){re.escape(metric_name)}=\s*"
@@ -52,7 +76,7 @@ def parse_metric(stdout: str, metric_name: str) -> float | None:
     )
 
     lines = stdout.splitlines()
-    matches: list[tuple[float, str]] = []
+    matches: list[float] = []
     for line in lines:
         for m in re.finditer(pattern, line, flags=re.IGNORECASE):
             try:
@@ -60,48 +84,17 @@ def parse_metric(stdout: str, metric_name: str) -> float | None:
             except (ValueError, TypeError):
                 continue
             if math.isnan(val) or math.isinf(val):
-                continue
-            if metric_name.lower() == "accuracy" and not (0.0 <= val <= 1.0):
-                continue
-            matches.append((val, line))
+                return None
+            matches.append(val)
 
     if not matches:
         return None
 
-    values = [m[0] for m in matches]
-    # If all matches have identical values, accept unambiguously
-    if all(math.isclose(v, values[0], rel_tol=1e-7, abs_tol=1e-7) for v in values):
-        return values[0]
-
-    # Multiple distinct values: evaluate context
-    summary_words = {"final", "summary", "overall", "total", "avg", "average", "mean", "test"}
-    sample_words = {"sample", "step", "batch", "epoch", "iter", "iteration"}
-
-    last_val, last_line = matches[-1]
-    last_line_lower = last_line.lower()
-    last_has_summary = any(re.search(rf"\b{w}\b", last_line_lower) for w in summary_words)
-    last_has_sample = any(re.search(rf"\b{w}\b", last_line_lower) for w in sample_words)
-
-    first_line_lower = matches[0][1].lower()
-    first_has_summary = any(re.search(rf"\b{w}\b", first_line_lower) for w in summary_words)
-
-    # Pattern b: Summary printed first, then per-sample metrics after it
-    if first_has_summary and last_has_sample:
-        # Ambiguous: summary first, then samples. Do not silently pick the last sample!
+    # If multiple occurrences appear with different values, ambiguous!
+    if not all(math.isclose(v, matches[0], rel_tol=1e-7, abs_tol=1e-7) for v in matches):
         return None
 
-    # Check if prior lines were samples/epochs/steps
-    prior_have_sample = any(
-        any(re.search(rf"\b{w}\b", line.lower()) for w in sample_words)
-        for _, line in matches[:-1]
-    )
-
-    # Pattern a: Summary metric printed last
-    if last_has_summary or (prior_have_sample and not last_has_sample):
-        return last_val
-
-    # Pattern d: Conflicting values with no clear final/summary line -> ambiguous
-    return None
+    return matches[0]
 
 
 def run_git_cmd(repo_path: Path, args: Sequence[str]) -> str:
@@ -169,10 +162,19 @@ def _execute_eval_run(
     if not args:
         return None, "Empty eval command"
 
+    # Create temporary metrics JSON file path for MODEL_BISECT_METRICS_FILE contract
+    temp_fd, metrics_file_path_str = tempfile.mkstemp(prefix="model_bisect_metrics_", suffix=".json")
+    os.close(temp_fd)
+    metrics_file = Path(metrics_file_path_str)
+    metrics_file.unlink(missing_ok=True)
+
+    env = {**os.environ, "MODEL_BISECT_METRICS_FILE": str(metrics_file)}
+
     try:
         proc = subprocess.Popen(
             args,
             cwd=str(worktree_path),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -190,15 +192,29 @@ def _execute_eval_run(
     except Exception as e:
         return None, f"Process execution failed: {e}"
 
-    if proc.returncode != 0:
-        err_msg = stderr.strip() or stdout.strip() or f"exit code {proc.returncode}"
-        return None, f"Process failed with exit code {proc.returncode}: {err_msg[:200]}"
+    try:
+        if proc.returncode != 0:
+            err_msg = stderr.strip() or stdout.strip() or f"exit code {proc.returncode}"
+            return None, f"Process failed with exit code {proc.returncode}: {err_msg[:200]}"
 
-    val = parse_metric(stdout, metric_name)
-    if val is None:
-        return None, f"Metric '{metric_name}' not found or invalid in stdout"
+        # 1. Primary source: read MODEL_BISECT_METRICS_FILE
+        json_err: str | None = None
+        if metrics_file.exists() and metrics_file.stat().st_size > 0:
+            val, json_err = parse_metrics_file(metrics_file, metric_name)
+            if json_err is None and val is not None:
+                return val, None
+        else:
+            json_err = "Metrics JSON file was not produced"
 
-    return val, None
+        # 2. Fallback source: stdout
+        val = parse_metric(stdout, metric_name)
+        if val is not None:
+            return val, None
+
+        return None, f"Metric '{metric_name}' not found: {json_err}; stdout fallback also failed"
+    finally:
+        if metrics_file.exists():
+            metrics_file.unlink(missing_ok=True)
 
 
 def evaluate_commit(
@@ -210,6 +226,7 @@ def evaluate_commit(
     direction: Direction,
     repeat_count: int,
     timeout: float,
+    valid_range: tuple[float, float] | None = None,
 ) -> CommitEvaluation:
     """Evaluate a candidate commit using a temporary git worktree."""
     start_time = time.perf_counter()
@@ -234,6 +251,17 @@ def evaluate_commit(
 
             metric = statistics.median(run_metrics)
             duration = time.perf_counter() - start_time
+
+            # Validate against optional valid range
+            if valid_range is not None and not (valid_range[0] <= metric <= valid_range[1]):
+                return CommitEvaluation(
+                    commit=commit,
+                    metric=metric,
+                    status="skipped",
+                    duration=duration,
+                    skip_reason=f"Metric value {metric} is outside valid range [{valid_range[0]}, {valid_range[1]}]",
+                    eval_runs=run_metrics if repeat_count > 1 else None,
+                )
 
             # Classify based on threshold and direction
             if direction == "higher":
@@ -324,11 +352,18 @@ def bisect(
     direction: Direction | str = "higher",
     repeat_count: int = 1,
     timeout: float = 120.0,
+    valid_range: tuple[float, float] | None = None,
     out_path: Path | str | None = None,
 ) -> BisectResult:
     """Find the git commit that caused an ML model's eval metric to regress.
 
     Uses binary search over the commit history, classifying commits by metric threshold.
+
+    Note on Monotonicity:
+    Non-monotonic detection is best-effort within the evaluation budget ceil(log2(N)) + 2.
+    An early regression that recovers can be missed when binary search uses its full budget.
+    The returned `BisectResult.monotonicity_verified` indicates whether the predecessor
+    verification check was executed and confirmed.
     """
     repo = Path(repo_path).resolve()
     if direction not in ("higher", "lower"):
@@ -343,6 +378,7 @@ def bisect(
             evaluated_commits=[],
             total_eval_count=0,
             error_message=str(e),
+            monotonicity_verified=False,
         )
         if out_path:
             _write_result(res, out_path)
@@ -363,6 +399,7 @@ def bisect(
             direction=direction,
             repeat_count=repeat_count,
             timeout=timeout,
+            valid_range=valid_range,
         )
         eval_cache[commit_sha] = eval_res
         eval_history.append(eval_res)
@@ -516,19 +553,29 @@ def bisect(
             high = candidate
 
     max_budget = math.ceil(math.log2(len(commits))) + 2
+    monotonicity_verified = False
+
     # Verify predecessor within budget to avoid jumping over an earlier bad commit
-    if low > 0 and commits[low - 1] not in eval_cache and len(eval_history) < max_budget:
-        evaluate(commits[low - 1])
-        if check_non_monotonic(commits, eval_cache):
-            res = BisectResult(
-                status="non_monotonic",
-                first_bad_commit=None,
-                evaluated_commits=eval_history,
-                total_eval_count=len(eval_history),
-            )
-            if out_path:
-                _write_result(res, out_path)
-            return res
+    if low > 0 and commits[low - 1] not in eval_cache:
+        if len(eval_history) < max_budget:
+            evaluate(commits[low - 1])
+            if check_non_monotonic(commits, eval_cache):
+                res = BisectResult(
+                    status="non_monotonic",
+                    first_bad_commit=None,
+                    evaluated_commits=eval_history,
+                    total_eval_count=len(eval_history),
+                    monotonicity_verified=False,
+                )
+                if out_path:
+                    _write_result(res, out_path)
+                return res
+            monotonicity_verified = True
+        else:
+            # Full budget reached before predecessor check could run
+            monotonicity_verified = False
+    elif low == 0 or (low > 0 and commits[low - 1] in eval_cache):
+        monotonicity_verified = True
 
     # Verify successor within budget to avoid guessing when candidate first_bad is followed by a recovery
     if high < len(commits) - 1 and commits[high + 1] not in eval_cache and len(eval_history) < max_budget:
@@ -539,6 +586,7 @@ def bisect(
                 first_bad_commit=None,
                 evaluated_commits=eval_history,
                 total_eval_count=len(eval_history),
+                monotonicity_verified=False,
             )
             if out_path:
                 _write_result(res, out_path)
@@ -550,6 +598,7 @@ def bisect(
         first_bad_commit=first_bad,
         evaluated_commits=eval_history,
         total_eval_count=len(eval_history),
+        monotonicity_verified=monotonicity_verified,
     )
     if out_path:
         _write_result(res, out_path)

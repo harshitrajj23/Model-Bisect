@@ -42,8 +42,18 @@ def main() -> None:
         default=None,
         help="Path to output JSON result file",
     )
+    parser.add_argument(
+        "--valid-range",
+        nargs=2,
+        type=float,
+        metavar=("MIN", "MAX"),
+        default=None,
+        help="Optional valid range [MIN, MAX] for the metric. Values outside cause commit to be skipped.",
+    )
 
     args = parser.parse_args()
+
+    valid_range = tuple(args.valid_range) if args.valid_range is not None else None
 
     result = bisect(
         repo_path=Path(args.repo),
@@ -55,6 +65,7 @@ def main() -> None:
         direction=args.direction,
         repeat_count=args.repeat,
         timeout=args.timeout,
+        valid_range=valid_range,
         out_path=args.out,
     )
 
