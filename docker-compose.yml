@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    command: uvicorn model_bisect.api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_BISECT_DB_PATH=/data/model_bisect.db
+      - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
+      - MODEL_BISECT_REPO_ROOT=/repos
+    volumes:
+      - db-data:/data
+      - ./targets.toml:/app/targets.toml:ro
+      - ./repos:/repos:ro
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: python -m model_bisect.worker
+    environment:
+      - MODEL_BISECT_DB_PATH=/data/model_bisect.db
+      - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
+      - MODEL_BISECT_REPO_ROOT=/repos
+      - MODEL_BISECT_POLL_INTERVAL=1.0
+    volumes:
+      - db-data:/data
+      - ./targets.toml:/app/targets.toml:ro
+      - ./repos:/repos:ro
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  db-data:

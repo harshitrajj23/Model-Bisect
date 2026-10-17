@@ -1,0 +1,20 @@
+# Example targets configuration for Model Bisect server
+
+[targets.nlp_sentiment]
+repo_path = "/repos/nlp_sentiment"
+eval_command = "python eval.py"
+metric_name = "accuracy"
+threshold = 0.90
+direction = "higher"
+valid_range = [0.0, 1.0]
+timeout = 120.0
+repeat_count = 1
+
+[targets.latency_benchmark]
+repo_path = "/repos/nlp_sentiment"
+eval_command = "python benchmark.py"
+metric_name = "latency_ms"
+threshold = 50.0
+direction = "lower"
+timeout = 60.0
+repeat_count = 3

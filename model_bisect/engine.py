@@ -13,7 +13,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Sequence
+from typing import Callable, Generator, Sequence
 
 from model_bisect.models import (
     BisectResult,
@@ -354,6 +354,7 @@ def bisect(
     timeout: float = 120.0,
     valid_range: tuple[float, float] | None = None,
     out_path: Path | str | None = None,
+    on_progress: Callable[[CommitEvaluation], None] | None = None,
 ) -> BisectResult:
     """Find the git commit that caused an ML model's eval metric to regress.
 
@@ -403,6 +404,11 @@ def bisect(
         )
         eval_cache[commit_sha] = eval_res
         eval_history.append(eval_res)
+        if on_progress is not None:
+            try:
+                on_progress(eval_res)
+            except Exception:
+                pass
         return eval_res
 
     # Handle edge case where good and bad are identical

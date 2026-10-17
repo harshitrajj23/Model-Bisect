@@ -1,0 +1,9 @@
+# Repository-level configuration for Model Bisect GitHub Action / CLI
+eval_command = "python eval.py"
+metric_name = "accuracy"
+threshold = 0.90
+direction = "higher"
+valid_range = [0.0, 1.0]
+timeout = 120.0
+repeat_count = 1
+fail_on_not_found = false

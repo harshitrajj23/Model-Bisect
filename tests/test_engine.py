@@ -286,3 +286,32 @@ def test_cli_execution_and_out_json(tmp_path: Path) -> None:
     assert data["status"] == "found"
     assert data["first_bad_commit"] == c_bad
     assert data["total_eval_count"] >= 2
+
+
+def test_bisect_on_progress_callback(tmp_path: Path) -> None:
+    """Test that on_progress callback is invoked for each evaluated commit."""
+    repo = tmp_path / "progress_repo"
+    create_git_repo_with_commits(repo, num_commits=5, regression_commit=3)
+
+    c0 = _run_git(repo, "rev-parse", "HEAD~4")
+    c_head = _run_git(repo, "rev-parse", "HEAD")
+
+    progress_events: list[str] = []
+
+    def on_progress(eval_res):
+        progress_events.append(eval_res.commit)
+
+    result = bisect(
+        repo_path=repo,
+        good_commit=c0,
+        bad_commit=c_head,
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.95,
+        direction="higher",
+        on_progress=on_progress,
+    )
+
+    assert result.status == "found"
+    assert len(progress_events) == result.total_eval_count
+    assert progress_events == [e.commit for e in result.evaluated_commits]
