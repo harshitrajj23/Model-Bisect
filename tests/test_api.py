@@ -118,6 +118,60 @@ def test_invalid_commit_string_422(api_env):
     assert resp2.status_code == 422
 
 
+def test_commit_validator_limits_and_patterns(api_env):
+    client, _ = api_env
+
+    # 1. Exactly 128 characters is allowed
+    len_128 = "a" * 128
+    resp_valid = client.post(
+        "/jobs",
+        json={
+            "target": "valid_target",
+            "good_commit": len_128,
+            "bad_commit": "HEAD",
+        },
+    )
+    assert resp_valid.status_code == 202
+
+    # 2. Exceeding 128 characters (129 chars) is rejected with 422
+    len_129 = "a" * 129
+    resp_129 = client.post(
+        "/jobs",
+        json={
+            "target": "valid_target",
+            "good_commit": len_129,
+            "bad_commit": "HEAD",
+        },
+    )
+    assert resp_129.status_code == 422
+
+    # 3. Leading hyphen is rejected with 422
+    for leading_dash in ["-c", "--flag", "-HEAD"]:
+        resp_dash = client.post(
+            "/jobs",
+            json={
+                "target": "valid_target",
+                "good_commit": leading_dash,
+                "bad_commit": "HEAD",
+            },
+        )
+        assert resp_dash.status_code == 422
+        assert "Invalid commit reference" in resp_dash.json()["detail"]
+
+    # 4. Double dots '..' is rejected with 422
+    for double_dot in ["HEAD..branch", "..", "../evil", "feat..v1"]:
+        resp_dot = client.post(
+            "/jobs",
+            json={
+                "target": "valid_target",
+                "good_commit": double_dot,
+                "bad_commit": "HEAD",
+            },
+        )
+        assert resp_dot.status_code == 422
+        assert "Invalid commit reference" in resp_dot.json()["detail"]
+
+
 def test_unknown_target_400(api_env):
     client, _ = api_env
     payload = {

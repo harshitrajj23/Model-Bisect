@@ -1450,3 +1450,31 @@ def test_metric_name_prefixes_and_word_boundaries(tmp_path: Path) -> None:
     assert res_val.status == "error"
     ev1_val = next(e for e in res_val.evaluated_commits if e.commit == c1)
     assert ev1_val.status == "skipped"
+
+
+def test_alternating_pattern_non_monotonic_regression(tmp_path: Path) -> None:
+    """Build exact alternating pattern (good, bad, good, bad, good) and assert non_monotonic."""
+    repo = init_git_repo(tmp_path / "repo_alternating")
+    metrics = [0.95, 0.80, 0.95, 0.80, 0.95]
+    commits = []
+    for i, m in enumerate(metrics):
+        (repo / "eval.py").write_text(f"print('accuracy={m}')\n")
+        (repo / "version.txt").write_text(f"commit_{i}\n")
+        _run_git(repo, "add", ".")
+        _run_git(repo, "commit", "-m", f"commit {i}: metric {m}")
+        commits.append(_run_git(repo, "rev-parse", "HEAD"))
+
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[-1],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+
+    assert res.status == "non_monotonic"
+    assert res.monotonicity_verified is False
+    assert res.first_bad_commit is None
+

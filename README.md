@@ -88,10 +88,10 @@ Start the API and background worker with a single command:
 docker compose up --build
 ```
 
-- The API is exposed at `http://localhost:8000`.
+- The API port is bound to `127.0.0.1:8000` (loopback only) for security.
 - The SQLite database is persisted in the `db-data` docker volume.
 - Server configuration is mounted from `./targets.toml` (read-only).
-- Evaluated repositories are mounted from `./repos` (read-only).
+- Evaluated repositories are mounted from `./repos` as **writable** because `git worktree add` creates metadata under `.git/worktrees/<name>/` inside the source repository. A read-only mount would cause worktree creation to fail.
 
 ---
 

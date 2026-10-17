@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.json
+targets.toml
+repos/
+scratch_demo/
+model_bisect.db*

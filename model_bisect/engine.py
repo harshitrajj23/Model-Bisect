@@ -411,186 +411,69 @@ def bisect(
                 pass
         return eval_res
 
-    # Handle edge case where good and bad are identical
-    if len(commits) == 1:
-        single_eval = evaluate(commits[0])
-        status: BisectStatus = "found" if single_eval.status == "bad" else "not_found"
-        res = BisectResult(
-            status=status,
-            first_bad_commit=commits[0] if status == "found" else None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
+    def get_ordered_evals() -> list[CommitEvaluation]:
+        seen = set()
+        ordered = []
+        for c in commits:
+            if c in eval_cache:
+                ordered.append(eval_cache[c])
+                seen.add(c)
+        for e in eval_history:
+            if e.commit not in seen:
+                ordered.append(e)
+                seen.add(e.commit)
+        return ordered
 
-    # 1. Evaluate endpoints: good_commit (index 0) and bad_commit (index N - 1)
-    good_eval = evaluate(commits[0])
-    bad_eval = evaluate(commits[-1])
-
-    # Check skipped endpoints
-    if good_eval.status == "skipped":
-        res = BisectResult(
-            status="error",
-            first_bad_commit=None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-            error_message=f"Good commit {commits[0]} was skipped: {good_eval.skip_reason}",
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
-
-    if bad_eval.status == "skipped":
-        res = BisectResult(
-            status="error",
-            first_bad_commit=None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-            error_message=f"Bad commit {commits[-1]} was skipped: {bad_eval.skip_reason}",
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
-
-    # Check non-monotonic between endpoints
-    if good_eval.status == "bad" and bad_eval.status == "good":
-        res = BisectResult(
-            status="non_monotonic",
-            first_bad_commit=None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
-
-    if good_eval.status == "bad" and bad_eval.status == "bad":
-        res = BisectResult(
-            status="not_found",
-            first_bad_commit=None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
-
-    if bad_eval.status == "good":
-        # Check if any commit in between regressed and then recovered (non-monotonic)
-        max_budget = math.ceil(math.log2(len(commits))) + 2
-        stack = [(0, len(commits) - 1)]
-        while stack and len(eval_history) < max_budget:
-            l, r = stack.pop()
-            if l + 1 >= r:
-                continue
-            m = (l + r) // 2
-            if m not in eval_cache:
-                mid_eval = evaluate(commits[m])
-                if check_non_monotonic(commits, eval_cache) or mid_eval.status == "bad":
-                    res = BisectResult(
-                        status="non_monotonic",
-                        first_bad_commit=None,
-                        evaluated_commits=eval_history,
-                        total_eval_count=len(eval_history),
-                    )
-                    if out_path:
-                        _write_result(res, out_path)
-                    return res
-                stack.append((l, m))
-                stack.append((m, r))
-
-        res = BisectResult(
-            status="not_found",
-            first_bad_commit=None,
-            evaluated_commits=eval_history,
-            total_eval_count=len(eval_history),
-        )
-        if out_path:
-            _write_result(res, out_path)
-        return res
-
-    # At this point: commits[0] is good, commits[-1] is bad.
-    # 2. Binary search across the range (low, high)
-    low = 0
-    high = len(commits) - 1
-
-    while low + 1 < high:
-        mid = (low + high) // 2
-        candidate = mid
-        eval_cand = evaluate(commits[candidate])
-
-        # If candidate is skipped, search outward for an unevaluated commit in (low, high)
-        if eval_cand.status == "skipped":
-            found_alt = False
-            max_dist = max(mid - low, high - mid)
-            for dist in range(1, max_dist + 1):
-                for delta in (-dist, dist):
-                    alt = mid + delta
-                    if low < alt < high and commits[alt] not in eval_cache:
-                        candidate = alt
-                        eval_cand = evaluate(commits[candidate])
-                        if eval_cand.status != "skipped":
-                            found_alt = True
-                            break
-                if found_alt:
-                    break
-
-            if not found_alt and eval_cand.status == "skipped":
-                # All candidates between low and high are skipped or evaluated as skipped
-                break
-
-        # Check non-monotonicity
-        if check_non_monotonic(commits, eval_cache):
+    try:
+        # Handle edge case where good and bad are identical
+        if len(commits) == 1:
+            single_eval = evaluate(commits[0])
+            status: BisectStatus = "found" if single_eval.status == "bad" else "not_found"
             res = BisectResult(
-                status="non_monotonic",
-                first_bad_commit=None,
-                evaluated_commits=eval_history,
+                status=status,
+                first_bad_commit=commits[0] if status == "found" else None,
+                evaluated_commits=get_ordered_evals(),
                 total_eval_count=len(eval_history),
             )
             if out_path:
                 _write_result(res, out_path)
             return res
 
-        if eval_cand.status == "good":
-            low = candidate
-        elif eval_cand.status == "bad":
-            high = candidate
+        # 1. Evaluate endpoints: good_commit (index 0) and bad_commit (index N - 1)
+        good_eval = evaluate(commits[0])
+        bad_eval = evaluate(commits[-1])
 
-    max_budget = math.ceil(math.log2(len(commits))) + 2
-    monotonicity_verified = False
+        # Check skipped endpoints
+        if good_eval.status == "skipped":
+            res = BisectResult(
+                status="error",
+                first_bad_commit=None,
+                evaluated_commits=get_ordered_evals(),
+                total_eval_count=len(eval_history),
+                error_message=f"Good commit {commits[0]} was skipped: {good_eval.skip_reason}",
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
 
-    # Verify predecessor within budget to avoid jumping over an earlier bad commit
-    if low > 0 and commits[low - 1] not in eval_cache:
-        if len(eval_history) < max_budget:
-            evaluate(commits[low - 1])
-            if check_non_monotonic(commits, eval_cache):
-                res = BisectResult(
-                    status="non_monotonic",
-                    first_bad_commit=None,
-                    evaluated_commits=eval_history,
-                    total_eval_count=len(eval_history),
-                    monotonicity_verified=False,
-                )
-                if out_path:
-                    _write_result(res, out_path)
-                return res
-            monotonicity_verified = True
-        else:
-            # Full budget reached before predecessor check could run
-            monotonicity_verified = False
-    elif low == 0 or (low > 0 and commits[low - 1] in eval_cache):
-        monotonicity_verified = True
+        if bad_eval.status == "skipped":
+            res = BisectResult(
+                status="error",
+                first_bad_commit=None,
+                evaluated_commits=get_ordered_evals(),
+                total_eval_count=len(eval_history),
+                error_message=f"Bad commit {commits[-1]} was skipped: {bad_eval.skip_reason}",
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
 
-    # Verify successor within budget to avoid guessing when candidate first_bad is followed by a recovery
-    if high < len(commits) - 1 and commits[high + 1] not in eval_cache and len(eval_history) < max_budget:
-        evaluate(commits[high + 1])
-        if check_non_monotonic(commits, eval_cache):
+        # Check non-monotonic between endpoints
+        if good_eval.status == "bad" and bad_eval.status == "good":
             res = BisectResult(
                 status="non_monotonic",
                 first_bad_commit=None,
-                evaluated_commits=eval_history,
+                evaluated_commits=get_ordered_evals(),
                 total_eval_count=len(eval_history),
                 monotonicity_verified=False,
             )
@@ -598,17 +481,208 @@ def bisect(
                 _write_result(res, out_path)
             return res
 
-    first_bad = commits[high]
-    res = BisectResult(
-        status="found",
-        first_bad_commit=first_bad,
-        evaluated_commits=eval_history,
-        total_eval_count=len(eval_history),
-        monotonicity_verified=monotonicity_verified,
-    )
-    if out_path:
-        _write_result(res, out_path)
-    return res
+        if good_eval.status == "bad" and bad_eval.status == "bad":
+            res = BisectResult(
+                status="not_found",
+                first_bad_commit=None,
+                evaluated_commits=get_ordered_evals(),
+                total_eval_count=len(eval_history),
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
+
+        if bad_eval.status == "good":
+            # Check if any commit in between regressed and then recovered (non-monotonic)
+            max_budget = math.ceil(math.log2(len(commits))) + 2
+            stack = [(0, len(commits) - 1)]
+            while stack and len(eval_history) < max_budget:
+                l, r = stack.pop()
+                if l + 1 >= r:
+                    continue
+                m = (l + r) // 2
+                if m not in eval_cache:
+                    mid_eval = evaluate(commits[m])
+                    if check_non_monotonic(commits, eval_cache) or mid_eval.status == "bad":
+                        res = BisectResult(
+                            status="non_monotonic",
+                            first_bad_commit=None,
+                            evaluated_commits=get_ordered_evals(),
+                            total_eval_count=len(eval_history),
+                            monotonicity_verified=False,
+                        )
+                        if out_path:
+                            _write_result(res, out_path)
+                        return res
+                    stack.append((l, m))
+                    stack.append((m, r))
+
+            res = BisectResult(
+                status="not_found",
+                first_bad_commit=None,
+                evaluated_commits=get_ordered_evals(),
+                total_eval_count=len(eval_history),
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
+
+        # At this point: commits[0] is good, commits[-1] is bad.
+        # 2. Binary search across the range (low, high)
+        low = 0
+        high = len(commits) - 1
+
+        while low + 1 < high:
+            mid = (low + high) // 2
+            candidate = mid
+            eval_cand = evaluate(commits[candidate])
+
+            # If candidate is skipped, search outward for an unevaluated commit in (low, high)
+            if eval_cand.status == "skipped":
+                found_alt = False
+                max_dist = max(mid - low, high - mid)
+                for dist in range(1, max_dist + 1):
+                    for delta in (-dist, dist):
+                        alt = mid + delta
+                        if low < alt < high and commits[alt] not in eval_cache:
+                            candidate = alt
+                            eval_cand = evaluate(commits[candidate])
+                            if eval_cand.status != "skipped":
+                                found_alt = True
+                                break
+                    if found_alt:
+                        break
+
+                if not found_alt and eval_cand.status == "skipped":
+                    # All candidates between low and high are skipped or evaluated as skipped
+                    break
+
+            # Check non-monotonicity
+            if check_non_monotonic(commits, eval_cache):
+                res = BisectResult(
+                    status="non_monotonic",
+                    first_bad_commit=None,
+                    evaluated_commits=get_ordered_evals(),
+                    total_eval_count=len(eval_history),
+                    monotonicity_verified=False,
+                )
+                if out_path:
+                    _write_result(res, out_path)
+                return res
+
+            if eval_cand.status == "good":
+                low = candidate
+            elif eval_cand.status == "bad":
+                high = candidate
+
+        max_budget = math.ceil(math.log2(len(commits))) + 2
+        monotonicity_verified = False
+
+        # Verify predecessor within budget to avoid jumping over an earlier bad commit
+        if low > 0 and commits[low - 1] not in eval_cache:
+            if len(eval_history) < max_budget:
+                evaluate(commits[low - 1])
+                if check_non_monotonic(commits, eval_cache):
+                    res = BisectResult(
+                        status="non_monotonic",
+                        first_bad_commit=None,
+                        evaluated_commits=get_ordered_evals(),
+                        total_eval_count=len(eval_history),
+                        monotonicity_verified=False,
+                    )
+                    if out_path:
+                        _write_result(res, out_path)
+                    return res
+                monotonicity_verified = True
+            else:
+                # Full budget reached before predecessor check could run
+                monotonicity_verified = False
+        elif low == 0 or (low > 0 and commits[low - 1] in eval_cache):
+            monotonicity_verified = True
+
+        # Verify successor within budget to avoid guessing when candidate first_bad is followed by a recovery
+        if high < len(commits) - 1 and commits[high + 1] not in eval_cache and len(eval_history) < max_budget:
+            evaluate(commits[high + 1])
+            if check_non_monotonic(commits, eval_cache):
+                res = BisectResult(
+                    status="non_monotonic",
+                    first_bad_commit=None,
+                    evaluated_commits=get_ordered_evals(),
+                    total_eval_count=len(eval_history),
+                    monotonicity_verified=False,
+                )
+                if out_path:
+                    _write_result(res, out_path)
+                return res
+
+        ordered_evals = get_ordered_evals()
+
+        # Check for any good-to-bad-to-good alternation in evaluated sequence
+        seen_bad = False
+        has_alternation = False
+        for e in ordered_evals:
+            if e.status == "bad":
+                seen_bad = True
+            elif e.status == "good" and seen_bad:
+                has_alternation = True
+                break
+
+        if has_alternation or check_non_monotonic(commits, eval_cache):
+            res = BisectResult(
+                status="non_monotonic",
+                first_bad_commit=None,
+                evaluated_commits=ordered_evals,
+                total_eval_count=len(eval_history),
+                monotonicity_verified=False,
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
+
+        first_bad = commits[high]
+        res = BisectResult(
+            status="found",
+            first_bad_commit=first_bad,
+            evaluated_commits=ordered_evals,
+            total_eval_count=len(eval_history),
+            monotonicity_verified=monotonicity_verified,
+        )
+
+        # Invariant assertion:
+        # If status is "found", the first_bad_commit must appear in evaluated_commits with status "bad",
+        # and every evaluated commit before it in search order must be good.
+        if res.status == "found":
+            if not res.first_bad_commit:
+                raise AssertionError("Invariant violation: status is 'found' but first_bad_commit is None")
+            matching = [e for e in res.evaluated_commits if e.commit == res.first_bad_commit]
+            if not matching or matching[0].status != "bad":
+                raise AssertionError(
+                    f"Invariant violation: first_bad_commit {res.first_bad_commit} does not appear in evaluated_commits with status 'bad'"
+                )
+            first_bad_idx = commits.index(res.first_bad_commit)
+            for c in commits[:first_bad_idx]:
+                if c in eval_cache and eval_cache[c].status != "good":
+                    raise AssertionError(
+                        f"Invariant violation: evaluated commit {c} before first_bad_commit {res.first_bad_commit} in search order has status '{eval_cache[c].status}', expected 'good'"
+                    )
+
+        if out_path:
+            _write_result(res, out_path)
+        return res
+
+    except Exception as e:
+        ordered_evals = get_ordered_evals() if 'get_ordered_evals' in locals() else (eval_history if 'eval_history' in locals() else [])
+        res = BisectResult(
+            status="error",
+            first_bad_commit=None,
+            evaluated_commits=ordered_evals,
+            total_eval_count=len(eval_history) if 'eval_history' in locals() else 0,
+            error_message=str(e),
+            monotonicity_verified=False,
+        )
+        if out_path:
+            _write_result(res, out_path)
+        return res
 
 
 def _write_result(result: BisectResult, out_path: Path | str) -> None:

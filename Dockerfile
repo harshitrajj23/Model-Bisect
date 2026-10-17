@@ -1,8 +1,8 @@
 FROM python:3.12-slim
 
-# Install git for repository inspection and worktree management
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates && \
+    git config --system --add safe.directory '*' && \
     rm -rf /var/lib/apt/lists/*
 
 # Create dedicated non-root user
