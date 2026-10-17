@@ -17,13 +17,27 @@ git clone "$REPO_ROOT" "$TMP_DIR/repo"
 cd "$TMP_DIR/repo"
 git checkout "$CURRENT_BRANCH"
 
+# Determine Python binary (requirements require Python >= 3.10)
+if command -v python3.12 &>/dev/null; then
+    PYTHON_BIN="python3.12"
+elif command -v python3.11 &>/dev/null; then
+    PYTHON_BIN="python3.11"
+elif command -v python3.10 &>/dev/null; then
+    PYTHON_BIN="python3.10"
+else
+    PYTHON_BIN="python3"
+fi
+
+echo "Using Python binary: $(command -v "$PYTHON_BIN")"
+
 # Create virtual environment and install requirements
 echo "Creating clean virtual environment..."
-python3 -m venv "$TMP_DIR/repo/.venv"
+"$PYTHON_BIN" -m venv "$TMP_DIR/repo/.venv"
 source "$TMP_DIR/repo/.venv/bin/activate"
 
-echo "Installing requirements from requirements.txt..."
-pip install --quiet --no-warn-script-location -r requirements.txt
+echo "Upgrading pip and installing requirements from requirements.txt..."
+pip install --quiet --upgrade pip
+pip install --quiet -r requirements.txt
 
 echo "Running pytest -v..."
 set +e
@@ -41,6 +55,7 @@ echo "=========================================="
 echo "Clean Clone Verification Results:"
 echo "Tests Collected: ${COLLECTED:-0}"
 echo "Tests Passed:    ${PASSED:-0}"
+echo "Exit Code:       $PYTEST_STATUS"
 echo "=========================================="
 
 if [ "$PYTEST_STATUS" -ne 0 ]; then
