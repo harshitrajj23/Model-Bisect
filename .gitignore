@@ -2,8 +2,13 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+*.db
+*.db-wal
+*.db-shm
+result.json
 *.json
 targets.toml
 repos/
 scratch_demo/
 model_bisect.db*
+
