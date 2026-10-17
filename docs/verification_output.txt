@@ -1,0 +1,93 @@
+=== Verifying Clean Clone ===
+Source repo: /Users/harshitrajsingh/Model_Bisect
+Current branch: main
+Temporary directory: /var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8
+Cloning into '/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo'...
+done.
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+Using Python binary: /opt/homebrew/bin/python3.12
+Creating clean virtual environment...
+Upgrading pip and installing requirements from requirements.txt...
+Running pytest -v...
+============================= test session starts ==============================
+platform darwin -- Python 3.12.15, pytest-9.1.1, pluggy-1.7.0 -- /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo/.venv/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo
+configfile: pytest.ini
+plugins: anyio-4.15.1
+collecting ... collected 57 items
+
+tests/test_adversarial.py::test_good_not_ancestor_of_bad PASSED          [  1%]
+tests/test_adversarial.py::test_good_and_bad_same_commit PASSED          [  3%]
+tests/test_adversarial.py::test_single_commit_repo PASSED                [  5%]
+tests/test_adversarial.py::test_two_commits_repo PASSED                  [  7%]
+tests/test_adversarial.py::test_branch_with_merge_commits PASSED         [  8%]
+tests/test_adversarial.py::test_short_hashes_branches_and_tags PASSED    [ 10%]
+tests/test_adversarial.py::test_detached_head_and_dirty_working_tree PASSED [ 12%]
+tests/test_adversarial.py::test_eval_exits_nonzero PASSED                [ 14%]
+tests/test_adversarial.py::test_eval_hangs_and_child_processes_killed PASSED [ 15%]
+tests/test_adversarial.py::test_eval_prints_metric_twice PASSED          [ 17%]
+tests/test_adversarial.py::test_eval_invalid_metrics PASSED              [ 19%]
+tests/test_adversarial.py::test_eval_warnings_and_progress_bars PASSED   [ 21%]
+tests/test_adversarial.py::test_eval_command_with_quotes_and_special_args PASSED [ 22%]
+tests/test_adversarial.py::test_threshold_equality_inclusive PASSED      [ 24%]
+tests/test_adversarial.py::test_direction_lower_latency PASSED           [ 26%]
+tests/test_adversarial.py::test_threshold_all_pass_or_all_fail PASSED    [ 28%]
+tests/test_adversarial.py::test_regression_at_first_and_last_commits PASSED [ 29%]
+tests/test_adversarial.py::test_two_regressions_then_recovery PASSED     [ 31%]
+tests/test_adversarial.py::test_random_metric_sequences_property PASSED  [ 33%]
+tests/test_adversarial.py::test_eval_count_monotonic_budget PASSED       [ 35%]
+tests/test_adversarial.py::test_repeat_one_run_crashes_skipped PASSED    [ 36%]
+tests/test_adversarial.py::test_repeat_even_number_median PASSED         [ 38%]
+tests/test_adversarial.py::test_cli_out_nested_nonexistent_directory PASSED [ 40%]
+tests/test_adversarial.py::test_cli_invalid_arguments PASSED             [ 42%]
+tests/test_adversarial.py::test_json_output_pydantic_roundtrip PASSED    [ 43%]
+tests/test_adversarial.py::test_deterministic_identical_json PASSED      [ 45%]
+tests/test_adversarial.py::test_metric_summary_printed_last PASSED       [ 47%]
+tests/test_adversarial.py::test_valid_range_omitted_accepts_values_outside_zero_one PASSED [ 49%]
+tests/test_adversarial.py::test_predecessor_check_budget_limit_documents_unverified PASSED [ 50%]
+tests/test_adversarial.py::test_metric_summary_printed_first_then_samples_ambiguous PASSED [ 52%]
+tests/test_adversarial.py::test_metric_duplicate_identical_values_accepted PASSED [ 54%]
+tests/test_adversarial.py::test_metric_conflicting_values_no_clear_final_ambiguous PASSED [ 56%]
+tests/test_adversarial.py::test_metric_name_prefixes_and_word_boundaries PASSED [ 57%]
+tests/test_adversarial.py::test_alternating_pattern_non_monotonic_regression PASSED [ 59%]
+tests/test_api.py::test_health_check PASSED                              [ 61%]
+tests/test_api.py::test_create_and_get_job PASSED                        [ 63%]
+tests/test_api.py::test_get_unknown_job_404 PASSED                       [ 64%]
+tests/test_api.py::test_invalid_commit_string_422 PASSED                 [ 66%]
+tests/test_api.py::test_commit_validator_limits_and_patterns PASSED      [ 68%]
+tests/test_api.py::test_unknown_target_400 PASSED                        [ 70%]
+tests/test_api.py::test_repo_path_traversal_rejected_400 PASSED          [ 71%]
+tests/test_api.py::test_list_jobs_and_filter PASSED                      [ 73%]
+tests/test_engine.py::test_bisect_regression_commit_12_loop_20 PASSED    [ 75%]
+tests/test_engine.py::test_non_monotonic_detection PASSED                [ 77%]
+tests/test_engine.py::test_skipped_commits_handling PASSED               [ 78%]
+tests/test_engine.py::test_repeat_median PASSED                          [ 80%]
+tests/test_engine.py::test_cli_execution_and_out_json PASSED             [ 82%]
+tests/test_engine.py::test_bisect_on_progress_callback PASSED            [ 84%]
+tests/test_engine.py::test_skipped_commit_before_culprit_allowed PASSED  [ 85%]
+tests/test_engine.py::test_validate_found_result_raises_on_invariant_violations PASSED [ 87%]
+tests/test_worker.py::test_stale_running_job_marked_failed_on_startup PASSED [ 89%]
+tests/test_worker.py::test_two_claim_attempts_atomic_race PASSED         [ 91%]
+tests/test_worker.py::test_job_execution_success_and_progress PASSED     [ 92%]
+tests/test_worker.py::test_job_engine_exception_marks_job_failed PASSED  [ 94%]
+tests/test_worker.py::test_end_to_end_planted_regression_job PASSED      [ 96%]
+tests/test_worker.py::test_end_to_end_alternating_repo_non_monotonic PASSED [ 98%]
+tests/test_worker.py::test_prune_target_worktrees_at_startup PASSED      [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 57 passed, 1 warning in 71.35s (0:01:11) ===================
+
+==========================================
+Clean Clone Verification Results:
+Tests Collected: 57
+Tests Passed:    57
+Exit Code:       0
+==========================================
+Clean clone verification completed successfully.
