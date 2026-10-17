@@ -1,8 +1,8 @@
 === Verifying Clean Clone ===
 Source repo: /Users/harshitrajsingh/Model_Bisect
 Current branch: main
-Temporary directory: /var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8
-Cloning into '/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo'...
+Temporary directory: /var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.sGtkOwEW1J
+Cloning into '/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.sGtkOwEW1J/repo'...
 done.
 Already on 'main'
 Your branch is up to date with 'origin/main'.
@@ -11,9 +11,9 @@ Creating clean virtual environment...
 Upgrading pip and installing requirements from requirements.txt...
 Running pytest -v...
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.15, pytest-9.1.1, pluggy-1.7.0 -- /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo/.venv/bin/python3.12
+platform darwin -- Python 3.12.15, pytest-9.1.1, pluggy-1.7.0 -- /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.sGtkOwEW1J/repo/.venv/bin/python3.12
 cachedir: .pytest_cache
-rootdir: /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo
+rootdir: /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.sGtkOwEW1J/repo
 configfile: pytest.ini
 plugins: anyio-4.15.1
 collecting ... collected 57 items
@@ -78,11 +78,11 @@ tests/test_worker.py::test_prune_target_worktrees_at_startup PASSED      [100%]
 
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/fastapi/testclient.py:1
-  /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.D8ogQVY7H8/repo/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  /private/var/folders/_9/73_4g8z95qg3gfjtkwjgpx1r0000gn/T/tmp.sGtkOwEW1J/repo/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=================== 57 passed, 1 warning in 71.35s (0:01:11) ===================
+=================== 57 passed, 1 warning in 72.04s (0:01:12) ===================
 
 ==========================================
 Clean Clone Verification Results:

@@ -220,18 +220,23 @@ Model Bisect provides a self-contained GitHub Action for automated CI regression
 
 ---
 
-## Known Limitations
+## Status and Limitations
 
 As documented in [`docs/verification.md`](docs/verification.md):
 
-1. **Predecessor Check is Best-Effort**:
-   To strictly respect the compute ceiling $\lceil \log_2(N) \rceil + 2$, non-monotonic detection runs only when binary search finishes with spare budget. An early regression that recovers can be missed if the binary search utilizes the full budget quota. In this scenario, Model Bisect returns `status="found"` with `monotonicity_verified=false` to document that monotonicity was not verified.
+1. **GitHub Action Status**:
+   - The GitHub Action is unverified until a real pull request runs it.
+2. **Hardware & Environment Scope**:
+   - GPU evaluation was not run.
+   - Docker Compose was run on one macOS host only.
+3. **Worktree Hygiene & Scoped Git Security**:
+   - The worktree-prune and safe.directory settings are scoped as described in the [Security Model](#security-model) section.
+4. **Predecessor Check is Best-Effort**:
+   - To strictly respect the compute ceiling $\lceil \log_2(N) \rceil + 2$, non-monotonic detection runs only when binary search finishes with spare budget. An early regression that recovers can be missed if the binary search utilizes the full budget quota. In this scenario, Model Bisect returns `status="found"` with `monotonicity_verified=false` to document that monotonicity was not verified.
+5. **Stdout Fallback is a Convenience, Not a Contract**:
+   - Stdout output is treated as unstructured process logs. The engine provides a fallback parser for lines matching `name=value`, but if duplicate differing values appear, the commit is marked `skipped` as ambiguous. Reliable evaluations should write to the path in `MODEL_BISECT_METRICS_FILE`.
+6. **Octopus Merges & Complex Topologies**:
+   - Commit history between `good_commit` and `bad_commit` is linearized topologically using `git rev-list --topo-order --reverse`. For octopus merges or multi-branch features, the engine searches along this linearized sequence.
+7. **GPU and IPC Isolation**:
+   - `git worktree` isolates file system trees across commits. However, subprocesses share the host's operating system, environment variables, GPU devices, and ports. If evaluations require complete resource sandboxing (e.g., fixed GPU memory, containerized filesystem), the user-provided eval command should invoke a container or sandbox wrapper (e.g., Docker, Apptainer).
 
-2. **Stdout Fallback is a Convenience, Not a Contract**:
-   Stdout output is treated as unstructured process logs. The engine provides a fallback parser for lines matching `name=value`, but if duplicate differing values appear, the commit is marked `skipped` as ambiguous. Reliable evaluations should write to the path in `MODEL_BISECT_METRICS_FILE`.
-
-3. **Octopus Merges & Complex Topologies**:
-   Commit history between `good_commit` and `bad_commit` is linearized topologically using `git rev-list --topo-order --reverse`. For octopus merges or multi-branch features, the engine searches along this linearized sequence.
-
-4. **GPU and IPC Isolation**:
-   `git worktree` isolates file system trees across commits. However, subprocesses share the host's operating system, environment variables, GPU devices, and ports. If evaluations require complete resource sandboxing (e.g., fixed GPU memory, containerized filesystem), the user-provided eval command should invoke a container or sandbox wrapper (e.g., Docker, Apptainer).
