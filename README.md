@@ -28,8 +28,13 @@ Security is a primary design constraint for the Model Bisect service:
 4. **Strict Commit Reference Validation**: `good_commit` and `bad_commit` parameters are validated against a strict regex pattern (`^(?!-)(?!.*\.\.)[a-zA-Z0-9_./~^@-]+$`). Leading hyphens (option flags) and shell metacharacters (`$`, `;`, `&`, `|`, quotes, backticks) are rejected with HTTP 422. References are passed as arguments to `git`, never interpolated into shell strings.
 5. **No Information Disclosure**: Internal stack traces, server paths, and exception details are masked from API error responses.
 6. **Network Access Notice**: Anyone who can reach the API can trigger evaluations defined in `targets.toml`. Authentication is out of scope for v1. **Do not expose this API publicly without an authenticating reverse proxy or VPN.**
+7. **Repository Mount & Worktree Hygiene**:
+   - The `/repos` volume mount is **writable** because `git worktree add` creates metadata records under `.git/worktrees/<name>/` inside the target repository. A read-only mount causes worktree creation to fail.
+   - Evaluation commands run with write access to the mounted repositories.
+   - A crashed or unexpectedly terminated run can leave behind worktree metadata. At startup, the worker automatically runs `git worktree prune` on each configured target's repository before processing jobs and logs what it removed.
 
 ---
+
 
 ## Starting Locally
 

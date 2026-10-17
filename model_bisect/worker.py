@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import sys
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from model_bisect.config import (
     RepoPathNotAllowedError,
     TargetNotFoundError,
     get_validated_target,
+    load_targets,
 )
 from model_bisect.db import (
     claim_next_job,
@@ -25,6 +27,37 @@ from model_bisect.engine import bisect
 from model_bisect.models import CommitEvaluation, JobResponse
 
 logger = logging.getLogger("model_bisect.worker")
+
+
+def prune_target_worktrees(config_path: Path | str | None = None) -> dict[str, str]:
+    """Run git worktree prune on each configured target's repository at startup.
+
+    Logs what was removed (if any) for each target repository.
+    Returns a dict mapping target names to prune output.
+    """
+    targets = load_targets(config_path=config_path)
+    prune_results: dict[str, str] = {}
+    for name, target in targets.items():
+        repo = Path(target.repo_path)
+        if not repo.exists() or not repo.is_dir():
+            continue
+        try:
+            proc = subprocess.run(
+                ["git", "-C", str(repo), "worktree", "prune", "-v"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            output = (proc.stdout + proc.stderr).strip()
+            prune_results[name] = output
+            if output:
+                logger.info(f"Target '{name}' ({repo}) worktree prune: {output}")
+            else:
+                logger.info(f"Target '{name}' ({repo}) worktree prune: 0 stale worktrees removed")
+        except Exception as e:
+            logger.warning(f"Failed to prune worktrees for target '{name}' ({repo}): {e}")
+    return prune_results
+
 
 
 def execute_job(
@@ -101,7 +134,10 @@ def run_worker_loop(
     if stale_count > 0:
         logger.warning(f"Marked {stale_count} stale running job(s) as failed on startup")
 
+    prune_target_worktrees(config_path=config_path)
+
     running = True
+
 
     def _sig_handler(signum: int, frame: Any) -> None:
         nonlocal running

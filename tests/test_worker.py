@@ -20,8 +20,9 @@ from model_bisect.db import (
     init_db,
 )
 from model_bisect.models import BisectResult, CommitEvaluation
-from model_bisect.worker import execute_job, run_worker_loop
+from model_bisect.worker import execute_job, prune_target_worktrees, run_worker_loop
 from tests.test_engine import create_git_repo_with_commits
+
 
 
 @pytest.fixture
@@ -314,4 +315,44 @@ def test_end_to_end_alternating_repo_non_monotonic(tmp_path: Path, monkeypatch: 
         assert completed["result"]["status"] == "non_monotonic"
         assert completed["result"]["monotonicity_verified"] is False
         assert completed["result"]["first_bad_commit"] is None
+
+
+def test_prune_target_worktrees_at_startup(tmp_path: Path):
+    """Test that prune_target_worktrees removes stale worktree metadata on target repositories."""
+    import shutil
+
+    repo = tmp_path / "prune_repo"
+    repo.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["git", "init"], cwd=str(repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Tester"], cwd=str(repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "tester@example.com"], cwd=str(repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "commit.gpgSign", "false"], cwd=str(repo), check=True, capture_output=True)
+
+    (repo / "file.txt").write_text("hello\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=str(repo), check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=str(repo), check=True, capture_output=True)
+
+    # Create a worktree
+    wt_dir = tmp_path / "temp_worktree"
+    subprocess.run(["git", "-C", str(repo), "worktree", "add", str(wt_dir), "HEAD"], check=True, capture_output=True)
+    assert (repo / ".git" / "worktrees" / wt_dir.name).exists()
+
+    # Simulate crash: remove worktree directory directly without git worktree remove
+    shutil.rmtree(wt_dir)
+
+    targets_file = tmp_path / "targets.toml"
+    targets_file.write_text(f"""
+    [targets.test_prune]
+    repo_path = "{repo}"
+    eval_command = "echo ok"
+    metric_name = "acc"
+    threshold = 0.5
+    """, encoding="utf-8")
+
+    # Run prune_target_worktrees
+    pruned = prune_target_worktrees(config_path=targets_file)
+    assert "test_prune" in pruned
+    assert wt_dir.name in pruned["test_prune"]
+    assert not (repo / ".git" / "worktrees" / wt_dir.name).exists()
+
 

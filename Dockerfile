@@ -2,8 +2,9 @@ FROM python:3.12-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates && \
-    git config --system --add safe.directory '*' && \
+    git config --system --add safe.directory /repos/demo_repo && \
     rm -rf /var/lib/apt/lists/*
+
 
 # Create dedicated non-root user
 RUN groupadd -g 1000 appuser && \

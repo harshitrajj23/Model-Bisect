@@ -45,8 +45,16 @@ def api_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     metric_name = "accuracy"
     threshold = 0.90
     direction = "higher"
+
+    [targets.dot_dot_target]
+    repo_path = "{valid_repo}/../../outside"
+    eval_command = "python eval.py"
+    metric_name = "accuracy"
+    threshold = 0.90
+    direction = "higher"
     """
     targets_file.write_text(targets_content, encoding="utf-8")
+
 
     monkeypatch.setenv("MODEL_BISECT_DB_PATH", str(db_file))
     monkeypatch.setenv("MODEL_BISECT_TARGETS_FILE", str(targets_file))
@@ -186,14 +194,16 @@ def test_unknown_target_400(api_env):
 
 def test_repo_path_traversal_rejected_400(api_env):
     client, _ = api_env
-    payload = {
-        "target": "traversal_target",
-        "good_commit": "HEAD~1",
-        "bad_commit": "HEAD",
-    }
-    resp = client.post("/jobs", json=payload)
-    assert resp.status_code == 400
-    assert "allowlisted root" in resp.json()["detail"]
+    for tgt in ["traversal_target", "dot_dot_target"]:
+        payload = {
+            "target": tgt,
+            "good_commit": "HEAD~1",
+            "bad_commit": "HEAD",
+        }
+        resp = client.post("/jobs", json=payload)
+        assert resp.status_code == 400
+        assert "allowlisted root" in resp.json()["detail"]
+
 
 
 def test_list_jobs_and_filter(api_env):
