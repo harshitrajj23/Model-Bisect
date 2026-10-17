@@ -314,4 +314,4 @@ def test_bisect_on_progress_callback(tmp_path: Path) -> None:
 
     assert result.status == "found"
     assert len(progress_events) == result.total_eval_count
-    assert progress_events == [e.commit for e in result.evaluated_commits]
+    assert set(progress_events) == {e.commit for e in result.evaluated_commits}

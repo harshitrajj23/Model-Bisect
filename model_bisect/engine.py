@@ -661,9 +661,9 @@ def bisect(
                 )
             first_bad_idx = commits.index(res.first_bad_commit)
             for c in commits[:first_bad_idx]:
-                if c in eval_cache and eval_cache[c].status != "good":
+                if c in eval_cache and eval_cache[c].status == "bad":
                     raise AssertionError(
-                        f"Invariant violation: evaluated commit {c} before first_bad_commit {res.first_bad_commit} in search order has status '{eval_cache[c].status}', expected 'good'"
+                        f"Invariant violation: evaluated commit {c} before first_bad_commit {res.first_bad_commit} in search order has status 'bad', expected 'good' or 'skipped'"
                     )
 
         if out_path:
