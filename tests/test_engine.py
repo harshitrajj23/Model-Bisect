@@ -7,8 +7,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from model_bisect.engine import bisect
-from model_bisect.models import BisectResult
+from model_bisect.engine import bisect, validate_found_result
+from model_bisect.models import BisectResult, CommitEvaluation
+
 
 
 def _run_git(cwd: Path, *args: str) -> str:
@@ -315,3 +316,109 @@ def test_bisect_on_progress_callback(tmp_path: Path) -> None:
     assert result.status == "found"
     assert len(progress_events) == result.total_eval_count
     assert set(progress_events) == {e.commit for e in result.evaluated_commits}
+
+
+def test_skipped_commit_before_culprit_allowed(tmp_path: Path) -> None:
+    """Test that a skipped commit sitting before the culprit on an otherwise monotonic
+
+    history is allowed, returning status='found' and the correct first_bad_commit.
+    """
+    repo = tmp_path / "skipped_before_culprit_repo"
+    repo.mkdir(parents=True, exist_ok=True)
+    _run_git(repo, "init")
+    _run_git(repo, "config", "user.name", "Tester")
+    _run_git(repo, "config", "user.email", "tester@example.com")
+    _run_git(repo, "config", "commit.gpgSign", "false")
+
+    # 5 commits: c0 (0.95), c1 (0.95), c2 (skipped), c3 (0.80 - culprit), c4 (0.80)
+    commits: list[str] = []
+    for i in range(5):
+        eval_script = repo / "eval.py"
+        if i == 2:
+            # Commit 2 crashes / exits non-zero to produce a 'skipped' status
+            eval_script.write_text("import sys; sys.exit(1)\n", encoding="utf-8")
+        elif i >= 3:
+            eval_script.write_text("print('accuracy=0.80')\n", encoding="utf-8")
+        else:
+            eval_script.write_text("print('accuracy=0.95')\n", encoding="utf-8")
+
+        (repo / "version.txt").write_text(f"commit_{i}\n", encoding="utf-8")
+        _run_git(repo, "add", ".")
+        _run_git(repo, "commit", "-m", f"commit {i}")
+        sha = _run_git(repo, "rev-parse", "HEAD")
+        commits.append(sha)
+
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[4],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+
+    assert res.status == "found"
+    assert res.first_bad_commit == commits[3]
+    # Verify commit 2 was evaluated and marked as skipped
+    c2_eval = next((e for e in res.evaluated_commits if e.commit == commits[2]), None)
+    assert c2_eval is not None
+    assert c2_eval.status == "skipped"
+
+
+def test_validate_found_result_raises_on_invariant_violations() -> None:
+    """Test that validate_found_result raises AssertionError when the invariant is violated."""
+    commits = ["c0", "c1", "c2", "c3"]
+
+    # Valid result: c0 good, c1 skipped, c2 bad (culprit), c3 bad
+    valid_res = BisectResult(
+        status="found",
+        first_bad_commit="c2",
+        evaluated_commits=[
+            CommitEvaluation(commit="c0", metric=0.95, status="good", duration=0.1),
+            CommitEvaluation(commit="c1", metric=None, status="skipped", duration=0.1, skip_reason="error"),
+            CommitEvaluation(commit="c2", metric=0.80, status="bad", duration=0.1),
+            CommitEvaluation(commit="c3", metric=0.80, status="bad", duration=0.1),
+        ],
+        total_eval_count=4,
+    )
+    # Must not raise
+    validate_found_result(valid_res, commits)
+
+    # Violation 1: An earlier commit in search order (c1) is evaluated as 'bad'
+    invalid_earlier_bad = BisectResult(
+        status="found",
+        first_bad_commit="c2",
+        evaluated_commits=[
+            CommitEvaluation(commit="c0", metric=0.95, status="good", duration=0.1),
+            CommitEvaluation(commit="c1", metric=0.75, status="bad", duration=0.1),
+            CommitEvaluation(commit="c2", metric=0.80, status="bad", duration=0.1),
+        ],
+        total_eval_count=3,
+    )
+    with pytest.raises(AssertionError, match="earlier in search order.*has status 'bad'"):
+        validate_found_result(invalid_earlier_bad, commits)
+
+    # Violation 2: The culprit commit is evaluated as 'good'
+    invalid_culprit_good = BisectResult(
+        status="found",
+        first_bad_commit="c2",
+        evaluated_commits=[
+            CommitEvaluation(commit="c0", metric=0.95, status="good", duration=0.1),
+            CommitEvaluation(commit="c2", metric=0.95, status="good", duration=0.1),
+        ],
+        total_eval_count=2,
+    )
+    with pytest.raises(AssertionError, match="not evaluated as 'bad'"):
+        validate_found_result(invalid_culprit_good, commits)
+
+    # Violation 3: first_bad_commit is None
+    invalid_no_culprit = BisectResult(
+        status="found",
+        first_bad_commit=None,
+        evaluated_commits=[],
+        total_eval_count=0,
+    )
+    with pytest.raises(AssertionError, match="first_bad_commit is None"):
+        validate_found_result(invalid_no_culprit, commits)
+

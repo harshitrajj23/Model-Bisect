@@ -342,6 +342,45 @@ def get_commit_list(repo_path: Path, good_commit: str, bad_commit: str) -> list[
     return [good_sha] + commits
 
 
+def validate_found_result(result: BisectResult, commits: Sequence[str]) -> None:
+    """Validate that a BisectResult with status 'found' satisfies the engine invariant.
+
+    Invariant Policy:
+    When status is "found", the culprit is evaluated as "bad", and no commit evaluated earlier
+    in search order is "bad". Commits marked "skipped" before the culprit are allowed, because
+    a skipped commit gives no evidence either way. Commits marked "good" are expected.
+
+    Raises:
+        AssertionError: If any condition of the invariant is violated.
+    """
+    if result.status != "found":
+        raise AssertionError(f"Expected status 'found', got '{result.status}'")
+
+    if not result.first_bad_commit:
+        raise AssertionError("Invariant violation: status is 'found' but first_bad_commit is None")
+
+    eval_by_sha = {e.commit: e for e in result.evaluated_commits}
+    culprit_eval = eval_by_sha.get(result.first_bad_commit)
+    if not culprit_eval or culprit_eval.status != "bad":
+        raise AssertionError(
+            f"Invariant violation: culprit commit {result.first_bad_commit} is not evaluated as 'bad'"
+        )
+
+    if result.first_bad_commit not in commits:
+        raise AssertionError(
+            f"Invariant violation: first_bad_commit {result.first_bad_commit} not in search commits"
+        )
+
+    culprit_idx = list(commits).index(result.first_bad_commit)
+    for c_sha in commits[:culprit_idx]:
+        ev = eval_by_sha.get(c_sha)
+        if ev and ev.status == "bad":
+            raise AssertionError(
+                f"Invariant violation: commit {c_sha} evaluated earlier in search order than "
+                f"culprit {result.first_bad_commit} has status 'bad', expected 'good' or 'skipped'"
+            )
+
+
 def bisect(
     repo_path: Path | str,
     good_commit: str,
@@ -360,6 +399,12 @@ def bisect(
 
     Uses binary search over the commit history, classifying commits by metric threshold.
 
+    Invariant Policy:
+    When status is "found", the culprit is evaluated as "bad", and no commit evaluated
+    earlier in search order is "bad". Commits marked "skipped" before the culprit are
+    allowed, because a skipped commit gives no evidence either way. Commits marked
+    "good" are expected.
+
     Note on Monotonicity:
     Non-monotonic detection is best-effort within the evaluation budget ceil(log2(N)) + 2.
     An early regression that recovers can be missed when binary search uses its full budget.
@@ -368,6 +413,7 @@ def bisect(
     """
     repo = Path(repo_path).resolve()
     if direction not in ("higher", "lower"):
+
         raise ValueError(f"Invalid direction '{direction}', must be 'higher' or 'lower'")
 
     try:
@@ -648,29 +694,16 @@ def bisect(
             monotonicity_verified=monotonicity_verified,
         )
 
-        # Invariant assertion:
-        # If status is "found", the first_bad_commit must appear in evaluated_commits with status "bad",
-        # and every evaluated commit before it in search order must be good.
-        if res.status == "found":
-            if not res.first_bad_commit:
-                raise AssertionError("Invariant violation: status is 'found' but first_bad_commit is None")
-            matching = [e for e in res.evaluated_commits if e.commit == res.first_bad_commit]
-            if not matching or matching[0].status != "bad":
-                raise AssertionError(
-                    f"Invariant violation: first_bad_commit {res.first_bad_commit} does not appear in evaluated_commits with status 'bad'"
-                )
-            first_bad_idx = commits.index(res.first_bad_commit)
-            for c in commits[:first_bad_idx]:
-                if c in eval_cache and eval_cache[c].status == "bad":
-                    raise AssertionError(
-                        f"Invariant violation: evaluated commit {c} before first_bad_commit {res.first_bad_commit} in search order has status 'bad', expected 'good' or 'skipped'"
-                    )
+        validate_found_result(res, commits)
 
         if out_path:
             _write_result(res, out_path)
         return res
 
+    except AssertionError:
+        raise
     except Exception as e:
+
         ordered_evals = get_ordered_evals() if 'get_ordered_evals' in locals() else (eval_history if 'eval_history' in locals() else [])
         res = BisectResult(
             status="error",
