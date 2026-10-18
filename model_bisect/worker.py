@@ -114,8 +114,12 @@ def execute_job(
             valid_range=target.valid_range,
             on_progress=on_progress_callback,
         )
-        finish_job(job.id, result, db_path=db_path)
-        logger.info(f"Job {job.id} completed with status: {result.status}")
+        if result.status == "error":
+            fail_job(job.id, result.error_message or "Bisect failed with error", db_path=db_path)
+            logger.warning(f"Job {job.id} failed with bisect error: {result.error_message}")
+        else:
+            finish_job(job.id, result, db_path=db_path)
+            logger.info(f"Job {job.id} completed with status: {result.status}")
     except Exception as e:
         logger.exception(f"Engine failure during job {job.id}: {e}")
         fail_job(job.id, f"Evaluation error: {e}", db_path=db_path)

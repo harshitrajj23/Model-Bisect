@@ -288,12 +288,13 @@ def test_end_to_end_alternating_repo_non_monotonic(tmp_path: Path, monkeypatch: 
     init_db(db_file)
 
     with TestClient(app) as client:
+        # Job B test: c0 and c3 (valid alternating endpoints -> non_monotonic)
         resp = client.post(
             "/jobs",
             json={
                 "target": "alternating_model",
                 "good_commit": commits[0],
-                "bad_commit": commits[-1],
+                "bad_commit": commits[3],
             },
         )
         assert resp.status_code == 202
@@ -315,6 +316,79 @@ def test_end_to_end_alternating_repo_non_monotonic(tmp_path: Path, monkeypatch: 
         assert completed["result"]["status"] == "non_monotonic"
         assert completed["result"]["monotonicity_verified"] is False
         assert completed["result"]["first_bad_commit"] is None
+
+
+def test_worker_endpoint_error_marks_job_failed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Submitting c4 as bad_commit returns error from bisect and marks job as failed with endpoint message."""
+    db_file = tmp_path / "worker_err.db"
+    repo_root = tmp_path / "repos_err"
+    repo_root.mkdir(parents=True, exist_ok=True)
+    targets_file = tmp_path / "targets_err.toml"
+
+    alt_repo = repo_root / "alternating_model"
+    alt_repo.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["git", "init"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Tester"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "tester@example.com"], cwd=str(alt_repo), check=True, capture_output=True)
+    subprocess.run(["git", "config", "commit.gpgSign", "false"], cwd=str(alt_repo), check=True, capture_output=True)
+
+    metrics = [0.95, 0.80, 0.95, 0.80, 0.95]
+    commits: list[str] = []
+    for i, m in enumerate(metrics):
+        (alt_repo / "eval.py").write_text(f"print('accuracy={m}')\n", encoding="utf-8")
+        (alt_repo / "v.txt").write_text(f"{i}\n", encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=str(alt_repo), check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"c{i}: {m}"], cwd=str(alt_repo), check=True, capture_output=True)
+        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(alt_repo), check=True, capture_output=True, text=True)
+        commits.append(out.stdout.strip())
+
+    targets_content = f"""
+    [targets.alternating_model]
+    repo_path = "{alt_repo}"
+    eval_command = "{sys.executable} eval.py"
+    metric_name = "accuracy"
+    threshold = 0.90
+    direction = "higher"
+    valid_range = [0.0, 1.0]
+    timeout = 30.0
+    repeat_count = 1
+    """
+    targets_file.write_text(targets_content, encoding="utf-8")
+
+    monkeypatch.setenv("MODEL_BISECT_DB_PATH", str(db_file))
+    monkeypatch.setenv("MODEL_BISECT_TARGETS_FILE", str(targets_file))
+    monkeypatch.setenv("MODEL_BISECT_REPO_ROOT", str(repo_root))
+
+    init_db(db_file)
+
+    with TestClient(app) as client:
+        # Job A test: submits c4 (commits[4]) as bad_commit
+        resp = client.post(
+            "/jobs",
+            json={
+                "target": "alternating_model",
+                "good_commit": commits[0],
+                "bad_commit": commits[4],
+            },
+        )
+        assert resp.status_code == 202
+        job_id = resp.json()["id"]
+
+        run_worker_loop(
+            poll_interval=0.1,
+            run_once=True,
+            db_path=db_file,
+            config_path=targets_file,
+            repo_root=repo_root,
+        )
+
+        fetch_resp = client.get(f"/jobs/{job_id}")
+        assert fetch_resp.status_code == 200
+        failed_job = fetch_resp.json()
+        assert failed_job["status"] == "failed"
+        assert failed_job["error_message"] is not None
+        assert commits[4] in failed_job["error_message"]
+        assert "expected 'bad'" in failed_job["error_message"]
 
 
 def test_prune_target_worktrees_at_startup(tmp_path: Path):

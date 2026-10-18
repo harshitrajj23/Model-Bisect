@@ -514,19 +514,7 @@ def bisect(
                 _write_result(res, out_path)
             return res
 
-        # Check non-monotonic between endpoints
-        if good_eval.status == "bad" and bad_eval.status == "good":
-            res = BisectResult(
-                status="non_monotonic",
-                first_bad_commit=None,
-                evaluated_commits=get_ordered_evals(),
-                total_eval_count=len(eval_history),
-                monotonicity_verified=False,
-            )
-            if out_path:
-                _write_result(res, out_path)
-            return res
-
+        # Keep existing not_found behavior if both endpoints evaluate as bad
         if good_eval.status == "bad" and bad_eval.status == "bad":
             res = BisectResult(
                 status="not_found",
@@ -538,36 +526,32 @@ def bisect(
                 _write_result(res, out_path)
             return res
 
-        if bad_eval.status == "good":
-            # Check if any commit in between regressed and then recovered (non-monotonic)
-            max_budget = math.ceil(math.log2(len(commits))) + 2
-            stack = [(0, len(commits) - 1)]
-            while stack and len(eval_history) < max_budget:
-                l, r = stack.pop()
-                if l + 1 >= r:
-                    continue
-                m = (l + r) // 2
-                if m not in eval_cache:
-                    mid_eval = evaluate(commits[m])
-                    if check_non_monotonic(commits, eval_cache) or mid_eval.status == "bad":
-                        res = BisectResult(
-                            status="non_monotonic",
-                            first_bad_commit=None,
-                            evaluated_commits=get_ordered_evals(),
-                            total_eval_count=len(eval_history),
-                            monotonicity_verified=False,
-                        )
-                        if out_path:
-                            _write_result(res, out_path)
-                        return res
-                    stack.append((l, m))
-                    stack.append((m, r))
-
+        # Validate endpoint labels: good_commit must evaluate as 'good', bad_commit as 'bad'
+        if good_eval.status != "good":
             res = BisectResult(
-                status="not_found",
+                status="error",
                 first_bad_commit=None,
                 evaluated_commits=get_ordered_evals(),
                 total_eval_count=len(eval_history),
+                error_message=(
+                    f"Good commit {commits[0]} evaluated as '{good_eval.status}' "
+                    f"(metric={good_eval.metric}), expected 'good'"
+                ),
+            )
+            if out_path:
+                _write_result(res, out_path)
+            return res
+
+        if bad_eval.status != "bad":
+            res = BisectResult(
+                status="error",
+                first_bad_commit=None,
+                evaluated_commits=get_ordered_evals(),
+                total_eval_count=len(eval_history),
+                error_message=(
+                    f"Bad commit {commits[-1]} evaluated as '{bad_eval.status}' "
+                    f"(metric={bad_eval.metric}), expected 'bad'"
+                ),
             )
             if out_path:
                 _write_result(res, out_path)

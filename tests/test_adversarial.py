@@ -701,7 +701,7 @@ def test_threshold_all_pass_or_all_fail(tmp_path: Path) -> None:
     _run_git(repo, "commit", "-m", "c1")
     c1 = _run_git(repo, "rev-parse", "HEAD")
 
-    # Every commit passes (threshold 0.50): expect not_found
+    # Every commit passes (threshold 0.50): bad endpoint evaluates as good -> expect error
     res_pass = bisect(
         repo_path=repo,
         good_commit=c0,
@@ -711,7 +711,8 @@ def test_threshold_all_pass_or_all_fail(tmp_path: Path) -> None:
         threshold=0.50,
         direction="higher",
     )
-    assert res_pass.status == "not_found"
+    assert res_pass.status == "error"
+    assert c1 in (res_pass.error_message or "")
     assert res_pass.first_bad_commit is None
 
     # Every commit fails (threshold 0.99): expect not_found

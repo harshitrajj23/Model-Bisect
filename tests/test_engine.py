@@ -422,3 +422,72 @@ def test_validate_found_result_raises_on_invariant_violations() -> None:
     with pytest.raises(AssertionError, match="first_bad_commit is None"):
         validate_found_result(invalid_no_culprit, commits)
 
+
+def _create_alternating_repo(repo_dir: Path) -> tuple[Path, list[str]]:
+    repo_dir.mkdir(parents=True, exist_ok=True)
+    _run_git(repo_dir, "init")
+    _run_git(repo_dir, "config", "user.name", "Tester")
+    _run_git(repo_dir, "config", "user.email", "tester@example.com")
+    _run_git(repo_dir, "config", "commit.gpgSign", "false")
+
+    metrics = [0.95, 0.80, 0.95, 0.80, 0.95]
+    commits: list[str] = []
+    for i, m in enumerate(metrics):
+        eval_script = repo_dir / "eval.py"
+        eval_script.write_text(f"print('accuracy={m}')\n", encoding="utf-8")
+        (repo_dir / "version.txt").write_text(f"commit_{i}\n", encoding="utf-8")
+        _run_git(repo_dir, "add", ".")
+        _run_git(repo_dir, "commit", "-m", f"commit {i}: {m}")
+        commits.append(_run_git(repo_dir, "rev-parse", "HEAD"))
+    return repo_dir, commits
+
+
+def test_bad_endpoint_evaluates_good_returns_error(tmp_path: Path) -> None:
+    repo, commits = _create_alternating_repo(tmp_path / "repo_bad_ep")
+    # bad_commit is c4 in the 0.95, 0.80, 0.95, 0.80, 0.95 history
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[4],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+    assert res.status == "error"
+    assert commits[4] in (res.error_message or "")
+    assert res.first_bad_commit is None
+
+
+def test_good_endpoint_evaluates_bad_returns_error(tmp_path: Path) -> None:
+    repo, commits = _create_alternating_repo(tmp_path / "repo_good_ep")
+    # good_commit is a 0.80 commit (c1), bad_commit is c4 (0.95)
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[1],
+        bad_commit=commits[4],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+    assert res.status == "error"
+    assert commits[1] in (res.error_message or "")
+    assert res.first_bad_commit is None
+
+
+def test_valid_alternating_endpoints_non_monotonic(tmp_path: Path) -> None:
+    repo, commits = _create_alternating_repo(tmp_path / "repo_alt_nm")
+    # good = c0, bad = c3 on the same history
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[3],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+    assert res.status == "non_monotonic"
+    assert res.first_bad_commit is None
+
