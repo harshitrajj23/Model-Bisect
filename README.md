@@ -16,7 +16,7 @@ Model Bisect is a v0.1 prototype.
 - **Docker Compose stack**: API and worker services run in Docker Compose on a single macOS host, and API responds to health checks (`docs/compose_ps.txt`, `docs/health.json`).
 
 ### Not run
-- **GitHub Action live PR trigger**: Not run against a live GitHub pull request event; requires a live GitHub repository with pull request event dispatch and `GITHUB_TOKEN`.
+- **GitHub Action live PR trigger**: run once on a test PR, run ID 39114453801, conclusion success.
 - **GPU evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
 - **Multi-host deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
 

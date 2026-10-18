@@ -101,6 +101,6 @@ pytest --collect-only -q > docs/collect_output.txt
 ## 6. Items Not Run
 
 The following components were not executed in this verification pass:
-1. **GitHub Action Live PR Trigger**: Not run against a live GitHub pull request event; requires a live GitHub repository with pull request event dispatch and `GITHUB_TOKEN`.
+1. **GitHub Action Live PR Trigger**: Run once on a test PR, run ID 39114453801, conclusion success (see [docs/action_run_log.txt](action_run_log.txt) and [docs/action_pr_comment.txt](action_pr_comment.txt)).
 2. **GPU Evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
 3. **Multi-Host Deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
