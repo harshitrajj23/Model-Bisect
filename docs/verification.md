@@ -29,10 +29,17 @@ This document records the exact commands executed, their results, and links to t
 
 ### Build and Launch Command
 ```bash
+docker compose down
 docker compose up --build -d
 docker compose ps > docs/compose_ps.txt
 ```
 - For the container process table verifying `model_bisect-api-1` and `model_bisect-worker-1` are up and healthy, see [docs/compose_ps.txt](compose_ps.txt).
+
+### API Health Check
+```bash
+curl -s http://127.0.0.1:8000/health > docs/health.json
+```
+- For the API health response confirming database connectivity, see [docs/health.json](health.json).
 
 ---
 
@@ -42,6 +49,7 @@ docker compose ps > docs/compose_ps.txt
 - **Goal**: Confirm endpoint validation rejects `bad_commit` that evaluates as `good` without entering binary search.
 - **Request**: Target `alternating_target`, `good_commit=c0` (`5e80c65`), `bad_commit=c4` (`577cf2c`).
 - **Result**: Job transitioned to status `failed` with error message `Bad commit 577cf2cc9c0942b0ff85f12a402b3ca259cd13a2 evaluated as 'good' (metric=0.95), expected 'bad'`.
+- In Job A, `progress_count` of 2 equals the two boundary endpoint evaluations (`c0` and `c4`) performed prior to the endpoint check failing; each evaluation invokes `on_progress` which increments `progress_count` in [`model_bisect/worker.py:96`](../model_bisect/worker.py#L96) and [`model_bisect/db.py:209`](../model_bisect/db.py#L209).
 - For the full raw response, see [docs/job_a.json](job_a.json).
 
 ### Job B: Alternating Monotonicity Check
@@ -68,6 +76,7 @@ The post-bisect check changed from "every earlier commit must be good" to "no ea
 - A fresh temporary clone was created, requirements installed into a fresh virtual environment, and the entire test suite executed.
 - Verified test results: 62 tests collected, 62 passed, exit code 0.
 - For the complete raw terminal log, see [docs/verification_output.txt](verification_output.txt).
+- For the summary lines from `verification_output.txt`, see [docs/tail_verification.txt](tail_verification.txt).
 
 ### Pytest Collection
 ```bash
@@ -80,6 +89,7 @@ pytest --collect-only -q > docs/collect_output.txt
   - `tests/test_api.py`: 8 tests
   - `tests/test_worker.py`: 8 tests
 - For the full list of collected tests, see [docs/collect_output.txt](collect_output.txt).
+- For the summary lines from `collect_output.txt`, see [docs/tail_collect.txt](tail_collect.txt).
 
 ---
 
