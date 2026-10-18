@@ -1496,3 +1496,58 @@ def test_alternating_pattern_non_monotonic_regression(tmp_path: Path) -> None:
     assert res.monotonicity_verified is False
     assert res.first_bad_commit is None
 
+
+def test_cleanup_removes_dir_when_worktree_remove_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    repo = init_git_repo(tmp_path / "fail_remove_repo")
+
+    (repo / "eval.py").write_text("print('accuracy=0.95')\n")
+    _run_git(repo, "add", "eval.py")
+    _run_git(repo, "commit", "-m", "c0: baseline good")
+    c0 = _run_git(repo, "rev-parse", "HEAD")
+
+    (repo / "eval.py").write_text("print('accuracy=0.80')  # regression c1\n")
+    _run_git(repo, "add", "eval.py")
+    _run_git(repo, "commit", "-m", "c1: regression bad")
+    c1 = _run_git(repo, "rev-parse", "HEAD")
+
+    (repo / "eval.py").write_text("print('accuracy=0.80')  # cosmetic change c2\n")
+    _run_git(repo, "add", "eval.py")
+    _run_git(repo, "commit", "-m", "c2: cosmetic bad")
+    c2 = _run_git(repo, "rev-parse", "HEAD")
+    assert c0 != c1 != c2
+
+    real_run = subprocess.run
+
+    def fake_run(cmd, *args, **kwargs):
+        cmd_list = cmd if isinstance(cmd, (list, tuple)) else str(cmd).split()
+        if "remove" in cmd_list:
+            return subprocess.CompletedProcess(
+                cmd, returncode=1, stdout="", stderr="simulated remove failure"
+            )
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    temp_base = Path(tempfile.gettempdir())
+    before_dirs = set(temp_base.glob("model_bisect_wt_*"))
+
+    res = bisect(
+        repo_path=repo,
+        good_commit=c0,
+        bad_commit=c2,
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+
+    assert res.status in ("found", "good", "bad", "non_monotonic")
+    assert res.status == "found"
+    assert res.first_bad_commit == c1
+
+    after_dirs = set(temp_base.glob("model_bisect_wt_*"))
+    new_leaked_dirs = after_dirs - before_dirs
+    assert not new_leaked_dirs, f"Leaked temporary worktrees created during test: {new_leaked_dirs}"
+

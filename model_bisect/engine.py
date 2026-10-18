@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import re
@@ -124,19 +125,28 @@ def temporary_worktree(repo_path: Path, commit: str) -> Generator[Path, None, No
     try:
         yield temp_dir
     finally:
-        # Always remove worktree and prune
-        subprocess.run(
-            ["git", "-C", str(repo_path), "worktree", "remove", "--force", str(temp_dir)],
-            capture_output=True,
-            text=True,
-        )
-        subprocess.run(
-            ["git", "-C", str(repo_path), "worktree", "prune"],
-            capture_output=True,
-            text=True,
-        )
-        if temp_dir.exists():
+        try:
+            remove_proc = subprocess.run(
+                ["git", "-C", str(repo_path), "worktree", "remove", "--force", str(temp_dir)],
+                capture_output=True,
+                text=True,
+            )
+            if remove_proc.returncode != 0:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception:
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+        try:
+            subprocess.run(
+                ["git", "-C", str(repo_path), "worktree", "prune"],
+                capture_output=True,
+                text=True,
+            )
+        except Exception:
+            pass
+
+        if temp_dir.exists():
+            logging.getLogger(__name__).warning("Temporary worktree directory still exists: %s", temp_dir)
 
 
 def _execute_eval_run(
