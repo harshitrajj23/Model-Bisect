@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import shutil
 from pathlib import Path
 
 import pytest
@@ -14,8 +15,30 @@ try:
 except ImportError:
     has_sklearn = False
 
+has_git = shutil.which("git") is not None
+
 
 @pytest.mark.skipif(not has_sklearn, reason="scikit-learn is not installed in the environment")
+@pytest.mark.skipif(not has_git, reason="git is not available in the environment")
+def test_run_sklearn_demo_script(tmp_path: Path):
+    script_path = Path(__file__).resolve().parent.parent / "scripts" / "run_sklearn_demo.sh"
+    output_dir = tmp_path / "demo_run"
+
+    proc = subprocess.run(
+        ["bash", str(script_path), str(output_dir)],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, f"run_sklearn_demo.sh failed with stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    assert "Culprit:" in proc.stdout
+    # Verify the culprit line contains 'regression'
+    culprit_lines = [line for line in proc.stdout.splitlines() if line.startswith("Culprit:")]
+    assert len(culprit_lines) == 1
+    assert "regression" in culprit_lines[0].lower()
+
+
+@pytest.mark.skipif(not has_sklearn, reason="scikit-learn is not installed in the environment")
+@pytest.mark.skipif(not has_git, reason="git is not available in the environment")
 def test_sklearn_demo_bisect(tmp_path: Path):
     repo_dir = tmp_path / "sklearn_demo_repo"
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "make_sklearn_repo.sh"
