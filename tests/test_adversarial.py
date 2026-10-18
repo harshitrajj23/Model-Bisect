@@ -802,7 +802,7 @@ def test_two_regressions_then_recovery(tmp_path: Path) -> None:
         metric_name="accuracy",
         threshold=0.90,
     )
-    assert result.status == "non_monotonic"
+    assert result.status in ("non_monotonic", "error")
     assert result.first_bad_commit is None
 
 
@@ -854,7 +854,7 @@ def test_random_metric_sequences_property(tmp_path: Path) -> None:
 
         # The core invariant:
         # If result is "found", it MUST equal the true first bad commit!
-        # Otherwise it must report "non_monotonic" or "not_found"
+        # Otherwise it must report "non_monotonic", "not_found", or "error"
         if result.status == "found":
             assert tfb is not None
             assert result.first_bad_commit == commits[tfb], (
@@ -865,7 +865,7 @@ def test_random_metric_sequences_property(tmp_path: Path) -> None:
             # Valid if no bad commit exists or all bad
             assert tfb is None or pattern[0] == "bad"
         else:
-            assert result.status == "non_monotonic"
+            assert result.status in ("non_monotonic", "error")
 
 
 def test_eval_count_monotonic_budget(tmp_path: Path) -> None:
@@ -1454,7 +1454,11 @@ def test_metric_name_prefixes_and_word_boundaries(tmp_path: Path) -> None:
 
 
 def test_alternating_pattern_non_monotonic_regression(tmp_path: Path) -> None:
-    """Build exact alternating pattern (good, bad, good, bad, good) and assert non_monotonic."""
+    """Build exact alternating pattern (good, bad, good, bad, good).
+
+    Confirm error when bad_commit evaluates good (c4), and non_monotonic
+    when bad_commit evaluates bad (c3).
+    """
     repo = init_git_repo(tmp_path / "repo_alternating")
     metrics = [0.95, 0.80, 0.95, 0.80, 0.95]
     commits = []
@@ -1465,10 +1469,23 @@ def test_alternating_pattern_non_monotonic_regression(tmp_path: Path) -> None:
         _run_git(repo, "commit", "-m", f"commit {i}: metric {m}")
         commits.append(_run_git(repo, "rev-parse", "HEAD"))
 
-    res = bisect(
+    # When bad_commit is commits[-1] (metric=0.95, which is good), endpoint validation rejects with error
+    res_err = bisect(
         repo_path=repo,
         good_commit=commits[0],
         bad_commit=commits[-1],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+    )
+    assert res_err.status == "error"
+
+    # When bad_commit is commits[3] (metric=0.80, which is bad), history c0..c3 is good, bad, good, bad
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[3],
         eval_command=f"{sys.executable} eval.py",
         metric_name="accuracy",
         threshold=0.90,
