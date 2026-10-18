@@ -11,6 +11,7 @@ N_ESTIMATORS = 200
 def main():
     # Load scikit-learn breast cancer dataset
     data = load_breast_cancer()
+    # Perform stratified train/test split with fixed random seed
     X_train, X_test, y_train, y_test = train_test_split(
         data.data, data.target, random_state=42, stratify=data.target
     )
