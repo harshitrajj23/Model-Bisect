@@ -1,0 +1,5 @@
+c0 (5e80c65a62be03fd102794d3de8acfdff813f72e): accuracy=0.95
+c1 (2b8a1750046bcfd21958254273ed9fad2ba5da71): accuracy=0.80
+c2 (2fcd2c876d272b02db1a20a1b62daf4aee4c1848): accuracy=0.95
+c3 (3db46a734d5201a11eebdb4e0aa1a53ff892fd73): accuracy=0.80
+c4 (577cf2cc9c0942b0ff85f12a402b3ca259cd13a2): accuracy=0.95

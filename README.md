@@ -132,22 +132,21 @@ curl -X GET http://localhost:8000/health
 curl -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
   -d '{
-    "target": "nlp_model",
-    "good_commit": "v1.0.0",
-    "bad_commit": "HEAD",
-    "threshold": 0.92
+    "target": "alternating_target",
+    "good_commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+    "bad_commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73"
   }'
 ```
 **Response (202 Accepted):**
 ```json
 {
-  "id": "e2d4e76a-3607-4e78-9eb4-8fd89b7fa9dc",
-  "target": "nlp_model",
-  "good_commit": "v1.0.0",
-  "bad_commit": "HEAD",
-  "threshold_override": 0.92,
+  "id": "7e6864c5-6be4-48ff-b98d-ba18fc3611eb",
+  "target": "alternating_target",
+  "good_commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+  "bad_commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73",
+  "threshold_override": null,
   "status": "queued",
-  "created_at": "2026-10-18T00:15:00.000000+00:00",
+  "created_at": "2026-10-18T08:16:37.218130+00:00",
   "started_at": null,
   "finished_at": null,
   "progress_count": 0,
@@ -156,30 +155,63 @@ curl -X POST http://localhost:8000/jobs \
 }
 ```
 
-### 3. Check Job Status & Result
+### 3. Check Job Status & Result (from `docs/job_b.json`)
 ```bash
-curl -X GET http://localhost:8000/jobs/e2d4e76a-3607-4e78-9eb4-8fd89b7fa9dc
+curl -X GET http://localhost:8000/jobs/7e6864c5-6be4-48ff-b98d-ba18fc3611eb
 ```
 **Response (200 OK - Done):**
 ```json
 {
-  "id": "e2d4e76a-3607-4e78-9eb4-8fd89b7fa9dc",
-  "target": "nlp_model",
-  "good_commit": "v1.0.0",
-  "bad_commit": "HEAD",
-  "threshold_override": 0.92,
+  "id": "7e6864c5-6be4-48ff-b98d-ba18fc3611eb",
+  "target": "alternating_target",
+  "good_commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+  "bad_commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73",
+  "threshold_override": null,
   "status": "done",
-  "created_at": "2026-10-18T00:15:00.000000+00:00",
-  "started_at": "2026-10-18T00:15:01.000000+00:00",
-  "finished_at": "2026-10-18T00:15:22.000000+00:00",
-  "progress_count": 5,
+  "created_at": "2026-10-18T08:16:37.218130+00:00",
+  "started_at": "2026-10-18T08:16:37.811091+00:00",
+  "finished_at": "2026-10-18T08:16:37.968221+00:00",
+  "progress_count": 4,
   "result": {
-    "status": "found",
-    "first_bad_commit": "7a3f81e4b85c1d683a9082ef7890123456789abc",
-    "evaluated_commits": [...],
-    "total_eval_count": 5,
+    "status": "non_monotonic",
+    "first_bad_commit": null,
+    "evaluated_commits": [
+      {
+        "commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+        "metric": 0.95,
+        "status": "good",
+        "duration": 0.039642458001253544,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "2b8a1750046bcfd21958254273ed9fad2ba5da71",
+        "metric": 0.8,
+        "status": "bad",
+        "duration": 0.021276125000440516,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "2fcd2c876d272b02db1a20a1b62daf4aee4c1848",
+        "metric": 0.95,
+        "status": "good",
+        "duration": 0.0201861249988724,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73",
+        "metric": 0.8,
+        "status": "bad",
+        "duration": 0.022664499998427345,
+        "skip_reason": null,
+        "eval_runs": null
+      }
+    ],
+    "total_eval_count": 4,
     "error_message": null,
-    "monotonicity_verified": true
+    "monotonicity_verified": false
   },
   "error_message": null
 }
@@ -224,11 +256,10 @@ Model Bisect provides a self-contained GitHub Action for automated CI regression
 
 As documented in [`docs/verification.md`](docs/verification.md):
 
-1. **GitHub Action Status**:
-   - The GitHub Action is unverified until a real pull request runs it.
-2. **Hardware & Environment Scope**:
-   - GPU evaluation was not run.
-   - Docker Compose was run on one macOS host only.
+1. **Items Not Run**:
+   - **GitHub Action live PR trigger**: Not run against a live pull request event; requires a live GitHub repository with pull request event dispatch and `GITHUB_TOKEN`.
+   - **GPU evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
+   - **Multi-host deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
 3. **Worktree Hygiene & Scoped Git Security**:
    - The worktree-prune and safe.directory settings are scoped as described in the [Security Model](#security-model) section.
 4. **Predecessor Check is Best-Effort**:

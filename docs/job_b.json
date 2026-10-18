@@ -1,0 +1,54 @@
+{
+  "id": "7e6864c5-6be4-48ff-b98d-ba18fc3611eb",
+  "target": "alternating_target",
+  "good_commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+  "bad_commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73",
+  "threshold_override": null,
+  "status": "done",
+  "created_at": "2026-10-18T08:16:37.218130+00:00",
+  "started_at": "2026-10-18T08:16:37.811091+00:00",
+  "finished_at": "2026-10-18T08:16:37.968221+00:00",
+  "progress_count": 4,
+  "result": {
+    "status": "non_monotonic",
+    "first_bad_commit": null,
+    "evaluated_commits": [
+      {
+        "commit": "5e80c65a62be03fd102794d3de8acfdff813f72e",
+        "metric": 0.95,
+        "status": "good",
+        "duration": 0.039642458001253544,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "2b8a1750046bcfd21958254273ed9fad2ba5da71",
+        "metric": 0.8,
+        "status": "bad",
+        "duration": 0.021276125000440516,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "2fcd2c876d272b02db1a20a1b62daf4aee4c1848",
+        "metric": 0.95,
+        "status": "good",
+        "duration": 0.0201861249988724,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "3db46a734d5201a11eebdb4e0aa1a53ff892fd73",
+        "metric": 0.8,
+        "status": "bad",
+        "duration": 0.022664499998427345,
+        "skip_reason": null,
+        "eval_runs": null
+      }
+    ],
+    "total_eval_count": 4,
+    "error_message": null,
+    "monotonicity_verified": false
+  },
+  "error_message": null
+}

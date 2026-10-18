@@ -1,0 +1,3 @@
+NAME                    IMAGE                 COMMAND                  SERVICE   CREATED         STATUS         PORTS
+model_bisect-api-1      model_bisect-api      "uvicorn model_bisec…"   api       5 minutes ago   Up 5 minutes   127.0.0.1:8000->8000/tcp
+model_bisect-worker-1   model_bisect-worker   "python -m model_bis…"   worker    5 minutes ago   Up 5 minutes   8000/tcp
