@@ -457,6 +457,8 @@ def test_bad_endpoint_evaluates_good_returns_error(tmp_path: Path) -> None:
     assert res.status == "error"
     assert commits[4] in (res.error_message or "")
     assert res.first_bad_commit is None
+    indices = [commits.index(e.commit) for e in res.evaluated_commits]
+    assert indices == sorted(indices)
 
 
 def test_good_endpoint_evaluates_bad_returns_error(tmp_path: Path) -> None:
@@ -490,4 +492,55 @@ def test_valid_alternating_endpoints_non_monotonic(tmp_path: Path) -> None:
     )
     assert res.status == "non_monotonic"
     assert res.first_bad_commit is None
+    indices = [commits.index(e.commit) for e in res.evaluated_commits]
+    assert indices == sorted(indices)
+
+
+def test_evaluated_commits_in_search_order(tmp_path: Path) -> None:
+    """Build a history where the binary search evaluates commits out of position order,
+
+    including a predecessor-check evaluation at the end. Assert that evaluated_commits
+    is sorted by position in commits, not by evaluation time.
+    """
+    repo = tmp_path / "repo_eval_order"
+    repo.mkdir(parents=True, exist_ok=True)
+    _run_git(repo, "init")
+    _run_git(repo, "config", "user.name", "Tester")
+    _run_git(repo, "config", "user.email", "tester@example.com")
+    _run_git(repo, "config", "commit.gpgSign", "false")
+    # 6 commits: c0, c1, c2 good (0.95), c3, c4, c5 bad (0.80)
+    # Search evaluates c0, c5, mid=c2 (good), mid=c3 (bad), then predecessor c1 at the end.
+    metrics = [0.95, 0.95, 0.95, 0.80, 0.80, 0.80]
+    commits: list[str] = []
+    for i, m in enumerate(metrics):
+        (repo / "eval.py").write_text(f"print('accuracy={m}')\n", encoding="utf-8")
+        (repo / "data.txt").write_text(f"{i}\n", encoding="utf-8")
+        _run_git(repo, "add", ".")
+        _run_git(repo, "commit", "-m", f"commit {i}: {m}")
+        commits.append(_run_git(repo, "rev-parse", "HEAD"))
+
+    eval_order: list[str] = []
+
+    def record_progress(ev: CommitEvaluation) -> None:
+        eval_order.append(ev.commit)
+
+    res = bisect(
+        repo_path=repo,
+        good_commit=commits[0],
+        bad_commit=commits[-1],
+        eval_command=f"{sys.executable} eval.py",
+        metric_name="accuracy",
+        threshold=0.90,
+        direction="higher",
+        on_progress=record_progress,
+    )
+
+    assert res.status == "found"
+    assert res.first_bad_commit == commits[3]
+    # Confirm evaluation time order was non-sequential and ended with predecessor check (c1)
+    assert eval_order == [commits[0], commits[5], commits[2], commits[3], commits[1]]
+    # Confirm evaluated_commits is strictly sorted by commit list position (c0, c1, c2, c3, c5)
+    res_indices = [commits.index(e.commit) for e in res.evaluated_commits]
+    assert res_indices == [0, 1, 2, 3, 5]
+    assert res_indices == sorted(res_indices)
 
