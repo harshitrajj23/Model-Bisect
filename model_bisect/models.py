@@ -74,7 +74,11 @@ class JobCreate(BaseModel):
 
 
 class JobResponse(BaseModel):
-    """Response model representing a bisect job."""
+    """Response model representing a bisect job.
+
+    The response uses threshold_override because it reports the value actually applied
+    to the job, and that is the documented meaning.
+    """
 
     id: str = Field(description="Unique job UUID")
     target: str = Field(description="Target identifier")
