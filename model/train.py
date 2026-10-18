@@ -16,6 +16,7 @@ def main():
         data.data, data.target, random_state=42, stratify=data.target
     )
     clf = RandomForestClassifier(n_estimators=N_ESTIMATORS, random_state=42)
+    # Fit classifier on training partition
     clf.fit(X_train, y_train)
     acc = float(clf.score(X_test, y_test))
 
