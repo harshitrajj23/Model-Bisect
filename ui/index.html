@@ -6,22 +6,27 @@
   <title>Model Bisect</title>
   <style>
     :root {
-      --bg-primary: #0b0f19;
-      --bg-card: rgba(17, 24, 39, 0.75);
-      --bg-card-hover: rgba(31, 41, 55, 0.85);
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-focus: #3b82f6;
-      --text-primary: #f9fafb;
-      --text-secondary: #9ca3af;
-      --text-muted: #6b7280;
-      --accent-blue: #3b82f6;
-      --accent-blue-hover: #2563eb;
-      --good-green: #10b981;
-      --bad-red: #ef4444;
-      --skipped-gray: #6b7280;
-      --badge-queued: #60a5fa;
-      --badge-running: #f59e0b;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-card: #131b2e;
+      --surface-hover: #1a243b;
+      --border: #1f293d;
+      --border-light: rgba(255, 255, 255, 0.08);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --text: #f8fafc;
+      --text-sub: #94a3b8;
+      --text-dim: #64748b;
+      --good: #10b981;
+      --good-bg: rgba(16, 185, 129, 0.12);
+      --bad: #ef4444;
+      --bad-bg: rgba(239, 68, 68, 0.12);
+      --skip: #64748b;
+      --skip-bg: rgba(100, 116, 139, 0.15);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --transition: all 250ms ease;
     }
 
     * {
@@ -31,27 +36,27 @@
     }
 
     body {
-      font-family: var(--font-family);
-      background-color: var(--bg-primary);
-      color: var(--text-primary);
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      line-height: 1.5;
     }
 
-    /* Header */
+    /* Top Navigation Header */
     header {
-      background: rgba(11, 15, 25, 0.9);
+      background: rgba(17, 24, 39, 0.85);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      padding: 0.875rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 40;
     }
 
     .brand {
@@ -63,417 +68,553 @@
     .brand-icon {
       width: 32px;
       height: 32px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 1.1rem;
       color: #fff;
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-    }
-
-    .brand-text h1 {
-      font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: -0.025em;
+      font-size: 1rem;
+      box-shadow: 0 0 16px var(--accent-glow);
     }
 
-    .brand-text p {
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
       font-size: 0.75rem;
-      color: var(--text-secondary);
+      color: var(--text-dim);
     }
 
-    .header-config {
+    .header-meta {
+      font-size: 0.8rem;
+      color: var(--text-sub);
       display: flex;
       align-items: center;
       gap: 1rem;
     }
 
-    .repo-url-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(31, 41, 55, 0.5);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.35rem 0.75rem;
-    }
-
-    .repo-url-wrapper label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .repo-url-wrapper input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text-primary);
-      font-size: 0.8rem;
-      width: 240px;
-    }
-
-    /* Container & Layout */
+    /* Main Container (Two Columns) */
     .app-container {
       flex: 1;
-      padding: 1.5rem 2rem;
       display: grid;
       grid-template-columns: 380px 1fr;
-      gap: 1.5rem;
-      max-width: 1600px;
-      margin: 0 auto;
-      width: 100%;
+      min-height: calc(100vh - 61px);
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 800px) {
       .app-container {
         grid-template-columns: 1fr;
       }
     }
 
-    .panel {
-      background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
+    /* Left Sidebar: Form & Recent Jobs */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
+      padding: 1.25rem;
+      overflow-y: auto;
+    }
+
+    .panel-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .panel-title {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-sub);
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-color);
     }
 
-    /* Forms */
     .form-group {
+      margin-bottom: 0.875rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-sub);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.875rem;
+      transition: var(--transition);
+    }
+
+    .form-input.font-mono {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.65rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--accent-hover);
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .form-alert {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      display: none;
+    }
+
+    .form-alert.error {
+      display: block;
+      background: var(--bad-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    /* Jobs List */
+    .jobs-list-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .jobs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+      max-height: 480px;
+    }
+
+    .job-item {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
     }
 
-    .form-group label {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text-secondary);
+    .job-item:hover {
+      background: var(--surface-hover);
+      border-color: rgba(59, 130, 246, 0.3);
     }
 
-    .form-group input {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.6rem 0.8rem;
-      color: var(--text-primary);
-      font-size: 0.875rem;
-      transition: border-color 0.15s, box-shadow 0.15s;
+    .job-item.selected {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
     }
 
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    .form-group input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .btn-submit {
-      background: var(--accent-blue);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.7rem 1rem;
-      font-size: 0.875rem;
+    .job-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
       font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.15s, transform 0.05s;
-      margin-top: 0.5rem;
     }
 
-    .btn-submit:hover {
-      background: var(--accent-blue-hover);
-    }
-
-    .btn-submit:active {
-      transform: translateY(1px);
-    }
-
-    .form-error {
-      color: var(--bad-red);
-      font-size: 0.8rem;
-      margin-top: 0.5rem;
-      min-height: 1.2rem;
-    }
-
-    /* Job List */
-    .jobs-table-wrapper {
-      overflow-x: auto;
-      max-height: 480px;
-    }
-
-    .jobs-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-
-    .jobs-table th {
-      text-align: left;
-      padding: 0.5rem 0.6rem;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-color);
-      font-weight: 500;
-    }
-
-    .jobs-table td {
-      padding: 0.6rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      white-space: nowrap;
-    }
-
-    .jobs-table tr {
-      cursor: pointer;
-      transition: background-color 0.1s;
-    }
-
-    .jobs-table tbody tr:hover {
-      background-color: var(--bg-card-hover);
-    }
-
-    .jobs-table tr.selected {
-      background-color: rgba(59, 130, 246, 0.15);
-      border-left: 3px solid var(--accent-blue);
-    }
-
-    .btn-icon {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      border-radius: 4px;
-      padding: 0.25rem 0.5rem;
+    .job-item-commits {
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      cursor: pointer;
+      color: var(--text-dim);
     }
 
-    .btn-icon:hover {
-      color: var(--text-primary);
-      border-color: var(--text-muted);
+    .job-item-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 0.2rem;
     }
 
-    /* Status Badges */
-    .badge {
+    /* Status Pills */
+    .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
+      gap: 0.375rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      text-transform: capitalize;
+      letter-spacing: 0.02em;
     }
 
-    .badge-queued {
-      background: rgba(96, 165, 250, 0.15);
-      color: #60a5fa;
-      border: 1px solid rgba(96, 165, 250, 0.3);
+    .status-pill.queued {
+      background: #374151;
+      color: #9ca3af;
     }
 
-    .badge-running {
+    .status-pill.running {
       background: rgba(245, 158, 11, 0.15);
       color: #f59e0b;
       border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
-    .badge-done {
+    .status-pill.done {
       background: rgba(16, 185, 129, 0.15);
       color: #10b981;
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .badge-failed {
+    .status-pill.failed {
       background: rgba(239, 68, 68, 0.15);
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    /* Result Details View */
-    .job-details-header {
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #f59e0b;
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.3;
+        transform: scale(0.7);
+      }
+    }
+
+    /* Right Column: Result View */
+    .result-view {
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+    }
+
+    /* Empty State */
+    .empty-state {
+      background: var(--surface-card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 4rem 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       gap: 1rem;
+      color: var(--text-dim);
     }
 
-    .job-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.75rem;
-      background: rgba(15, 23, 42, 0.4);
-      padding: 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--text-sub);
     }
 
-    .meta-item {
+    .empty-state h3 {
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      font-size: 0.875rem;
+      max-width: 380px;
+    }
+
+    /* Loading Skeleton */
+    .loading-state {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 1.5rem;
     }
 
-    .meta-label {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .skeleton-bar {
+      background: linear-gradient(90deg, #1f293d 25%, #2a374f 50%, #1f293d 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s infinite;
+      border-radius: 6px;
     }
 
-    .meta-value {
-      font-size: 0.875rem;
-      color: var(--text-primary);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      word-break: break-all;
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
     }
 
-    /* Polling progress alert */
-    .progress-banner {
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 8px;
-      padding: 0.85rem 1.25rem;
+    .progress-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-sub);
+    }
+
+    /* Result Header Card */
+    .result-header-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
-    .progress-left {
+    .result-meta-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .result-meta-target {
+      font-size: 1.25rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }
 
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(59, 130, 246, 0.3);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .result-meta-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Culprit Card */
+    /* Culprit Card (status: found) */
     .culprit-card {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(185, 28, 28, 0.05));
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      border-radius: 10px;
-      padding: 1.25rem;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(19, 27, 46, 0.8) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 12px;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.08);
+      gap: 1rem;
+      position: relative;
     }
 
-    .culprit-header {
+    .culprit-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f87171;
+    }
+
+    .culprit-main {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .culprit-short-hash {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .culprit-full-hash-wrap {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: #f87171;
-      font-weight: 600;
-      font-size: 0.95rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .culprit-sha-row {
+    .culprit-full-hash {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text);
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .culprit-badges {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 0.75rem;
       flex-wrap: wrap;
     }
 
-    .culprit-hash {
-      font-size: 1.5rem;
-      font-weight: 700;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #fff;
-    }
-
-    .culprit-link {
-      color: #60a5fa;
-      text-decoration: underline;
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-
-    .culprit-link:hover {
-      color: #93c5fd;
-    }
-
-    .culprit-meta {
-      display: flex;
-      gap: 1.5rem;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      border-top: 1px solid rgba(239, 68, 68, 0.15);
-      padding-top: 0.5rem;
-    }
-
-    /* Plain text result banner for error, not_found, non_monotonic */
-    .status-plain-banner {
-      background: rgba(31, 41, 55, 0.5);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .status-plain-banner.warn {
-      border-color: rgba(245, 158, 11, 0.3);
-      background: rgba(245, 158, 11, 0.05);
-    }
-
-    .status-plain-banner.error {
-      border-color: rgba(239, 68, 68, 0.3);
-      background: rgba(239, 68, 68, 0.05);
-    }
-
-    .status-plain-title {
+    .badge-mono {
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 600;
-      font-size: 0.9rem;
     }
 
-    .status-plain-msg {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      white-space: pre-wrap;
+    .badge-mono.verified {
+      background: var(--good-bg);
+      color: var(--good);
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    /* Chart Section */
-    .chart-section {
+    .badge-mono.unverified {
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-count {
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-sub);
+      border: 1px solid var(--border-light);
+    }
+
+    /* Message Panel (non_monotonic, not_found, error, or job failed) */
+    .message-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
     }
 
+    .message-panel.error-border {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, rgba(19, 27, 46, 0.9) 100%);
+    }
+
+    .message-panel.warning-border {
+      border-color: rgba(245, 158, 11, 0.3);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(19, 27, 46, 0.9) 100%);
+    }
+
+    .message-status-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .message-body {
+      font-size: 0.875rem;
+      color: var(--text-sub);
+      white-space: pre-wrap;
+      font-family: var(--font-mono);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+    }
+
+    /* Trajectory Chart Card */
+    .chart-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+    }
+
     .chart-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
     }
 
     .chart-legend {
@@ -481,6 +622,7 @@
       align-items: center;
       gap: 1rem;
       font-size: 0.75rem;
+      color: var(--text-sub);
     }
 
     .legend-item {
@@ -490,52 +632,132 @@
     }
 
     .legend-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
     }
 
+    .legend-dot.good { background-color: var(--good); }
+    .legend-dot.bad { background-color: var(--bad); }
+    .legend-dot.skip { background-color: var(--skip); }
+    .legend-line { width: 14px; height: 2px; border-top: 2px dashed var(--accent); }
+
     .chart-container {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem;
       position: relative;
+      width: 100%;
+      overflow-x: auto;
     }
 
-    svg.eval-chart {
-      width: 100%;
-      height: 280px;
+    svg.trajectory-svg {
       display: block;
-      overflow: visible;
+      width: 100%;
+      height: auto;
+      min-width: 500px;
+    }
+
+    .svg-grid-line {
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 1;
+    }
+
+    .svg-axis-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      fill: var(--text-dim);
+    }
+
+    .svg-line-trajectory {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.2);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .svg-threshold-line {
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+    }
+
+    .svg-point {
+      cursor: pointer;
+      transition: r 150ms ease;
+    }
+
+    .svg-point:hover, .svg-point:focus {
+      r: 7;
+      outline: none;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+    }
+
+    /* Floating Tooltip */
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      display: none;
+      z-index: 20;
+      white-space: nowrap;
+      transition: opacity 150ms ease;
+    }
+
+    .chart-tooltip p {
+      margin: 0.15rem 0;
+      font-family: var(--font-mono);
     }
 
     /* Evaluated Commits Table */
-    .commits-table {
+    .table-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+    }
+
+    table.commits-table {
       width: 100%;
       border-collapse: collapse;
+      text-align: left;
+      font-size: 0.825rem;
+    }
+
+    table.commits-table th {
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table.commits-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border-light);
+      font-family: var(--font-mono);
       font-size: 0.8rem;
     }
 
-    .commits-table th {
-      text-align: left;
-      padding: 0.5rem;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-color);
-      font-weight: 500;
+    table.commits-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .commits-table td {
-      padding: 0.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-      font-size: 0.9rem;
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
 </head>
@@ -543,795 +765,802 @@
 
   <header>
     <div class="brand">
-      <div class="brand-icon">MB</div>
-      <div class="brand-text">
-        <h1>Model Bisect</h1>
-        <p>ML Regression Bisection & Verification</p>
+      <div class="brand-icon">M</div>
+      <div>
+        <div class="brand-title">Model Bisect</div>
+        <div class="brand-sub">ML Regression Culprit Finder</div>
       </div>
     </div>
-    <div class="header-config">
-      <div class="repo-url-wrapper">
-        <label for="repoUrlInput">Repo URL (optional):</label>
-        <input type="text" id="repoUrlInput" placeholder="e.g. https://github.com/org/repo" />
-      </div>
+    <div class="header-meta">
+      <span id="active-poll-indicator" style="display: none;">Polling active</span>
+      <span>API: /jobs</span>
     </div>
   </header>
 
   <main class="app-container">
 
-    <!-- Left Column: Submit Job & Recent Jobs -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-
-      <!-- Job Form -->
-      <section class="panel">
-        <div class="panel-title">
-          <span>Create Bisect Job</span>
-        </div>
-        <form id="jobForm">
+    <!-- Left Column: Form & Job List -->
+    <aside class="sidebar">
+      
+      <!-- New Job Form -->
+      <section class="panel-card">
+        <h2 class="panel-title">Start Bisect Job</h2>
+        <form id="job-form">
           <div class="form-group">
-            <label for="targetInput">Target</label>
-            <input type="text" id="targetInput" required placeholder="e.g. alternating_target" />
+            <label for="input-target">Target</label>
+            <input type="text" id="input-target" class="form-input" placeholder="e.g. demo_target" required>
           </div>
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label for="goodCommitInput">Good Commit</label>
-            <input type="text" id="goodCommitInput" required placeholder="Baseline commit SHA or ref" />
+          <div class="form-group">
+            <label for="input-good">Good Commit</label>
+            <input type="text" id="input-good" class="form-input font-mono" placeholder="Hash or branch (e.g. c0)" required>
           </div>
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label for="badCommitInput">Bad Commit</label>
-            <input type="text" id="badCommitInput" required placeholder="Regressed commit SHA or ref" />
+          <div class="form-group">
+            <label for="input-bad">Bad Commit</label>
+            <input type="text" id="input-bad" class="form-input font-mono" placeholder="Hash or branch (e.g. c11)" required>
           </div>
-          <div class="form-group" style="margin-top: 0.75rem;">
-            <label for="thresholdInput">Threshold (Optional)</label>
-            <input type="number" step="any" id="thresholdInput" placeholder="Default target threshold if blank" />
+          <div class="form-group">
+            <label for="input-threshold">Threshold Override (optional)</label>
+            <input type="number" step="any" id="input-threshold" class="form-input" placeholder="Leave empty for target default">
           </div>
-          <button type="submit" id="submitBtn" class="btn-submit" style="width: 100%;">Submit Job</button>
-          <div id="formError" class="form-error"></div>
+          <button type="submit" id="btn-submit-job" class="btn-submit">
+            Submit Bisect Job
+          </button>
+          <div id="form-error" class="form-alert"></div>
         </form>
       </section>
 
       <!-- Recent Jobs List -->
-      <section class="panel" style="flex: 1;">
+      <section class="panel-card jobs-list-container">
         <div class="panel-title">
           <span>Recent Jobs</span>
-          <button type="button" id="refreshJobsBtn" class="btn-icon">Refresh</button>
+          <span id="jobs-count" style="font-size: 0.75rem; color: var(--text-dim);">0</span>
         </div>
-        <div class="jobs-table-wrapper">
-          <table class="jobs-table" id="jobsTable">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Target</th>
-                <th>Status</th>
-                <th>Progress</th>
-              </tr>
-            </thead>
-            <tbody id="jobsTableBody">
-              <tr>
-                <td colspan="4" class="empty-state">Loading jobs...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div id="jobs-list" class="jobs-list">
+          <!-- Populated safely via DOM APIs -->
         </div>
       </section>
 
-    </div>
+    </aside>
 
     <!-- Right Column: Result View -->
-    <section class="panel" id="resultViewPanel">
-      <div class="panel-title">
-        <span>Job Details & Result</span>
-        <span id="activeJobStatusBadge"></span>
-      </div>
-
-      <div id="noJobSelected" class="empty-state">
-        Select a job from the list or create a new job to inspect results.
-      </div>
-
-      <div id="jobDetailsContent" style="display: none; flex-direction: column; gap: 1.5rem;">
-
-        <!-- Metadata Grid -->
-        <div class="job-meta-grid">
-          <div class="meta-item">
-            <span class="meta-label">Job ID</span>
-            <span class="meta-value" id="detailJobId"></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Target</span>
-            <span class="meta-value" id="detailTarget"></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Good Commit</span>
-            <span class="meta-value" id="detailGoodCommit"></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Bad Commit</span>
-            <span class="meta-value" id="detailBadCommit"></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Threshold Override</span>
-            <span class="meta-value" id="detailThreshold"></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Progress Count</span>
-            <span class="meta-value" id="detailProgressCount"></span>
-          </div>
-        </div>
-
-        <!-- Polling Banner (Visible when queued or running) -->
-        <div id="pollingBanner" class="progress-banner" style="display: none;">
-          <div class="progress-left">
-            <div class="spinner"></div>
-            <div>
-              <div style="font-weight: 600; font-size: 0.85rem;" id="pollingStatusTitle">Evaluation in progress...</div>
-              <div style="font-size: 0.75rem; color: var(--text-secondary);">Polling status every 2 seconds</div>
-            </div>
-          </div>
-          <div style="font-weight: 700; font-size: 1rem;" id="pollingCountDisplay">0 evals</div>
-        </div>
-
-        <!-- Culprit Card (Visible when result.status === 'found') -->
-        <div id="culpritCard" class="culprit-card" style="display: none;">
-          <div class="culprit-header">
-            <span>Culprit Commit Identified</span>
-          </div>
-          <div class="culprit-sha-row">
-            <span class="culprit-hash" id="culpritShortSha"></span>
-            <span id="culpritLinkContainer"></span>
-          </div>
-          <div class="culprit-meta">
-            <div>
-              <span>Monotonicity Verified: </span>
-              <strong id="culpritMonotonicity"></strong>
-            </div>
-            <div>
-              <span>Total Evaluations: </span>
-              <strong id="culpritTotalEvals"></strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- Plain Text Banner (Visible when status is non_monotonic, not_found, or error) -->
-        <div id="statusPlainBanner" class="status-plain-banner" style="display: none;">
-          <div class="status-plain-title" id="statusPlainTitle"></div>
-          <div class="status-plain-msg" id="statusPlainMessage"></div>
-        </div>
-
-        <!-- Chart Section -->
-        <div id="chartSection" class="chart-section" style="display: none;">
-          <div class="chart-header">
-            <span style="font-size: 0.85rem; font-weight: 600;">Evaluation Trajectory</span>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <div class="legend-dot" style="background: var(--good-green);"></div>
-                <span>Good</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot" style="background: var(--bad-red);"></div>
-                <span>Bad</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot" style="background: var(--skipped-gray);"></div>
-                <span>Skipped</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="chart-container">
-            <svg id="evalChart" class="eval-chart" viewBox="0 0 700 240"></svg>
-          </div>
-        </div>
-
-        <!-- Evaluated Commits Table -->
-        <div id="evaluatedCommitsSection" style="display: none; flex-direction: column; gap: 0.75rem;">
-          <span style="font-size: 0.85rem; font-weight: 600;">Evaluated Commits</span>
-          <div style="overflow-x: auto;">
-            <table class="commits-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Commit</th>
-                  <th>Metric</th>
-                  <th>Status</th>
-                  <th>Duration</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody id="commitsTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
+    <section class="result-view" id="result-view">
+      <!-- Populated safely via DOM APIs -->
     </section>
 
   </main>
 
   <script>
-    (function () {
-      "use strict";
+    // State
+    let currentJobId = null;
+    let pollIntervalId = null;
+    let jobsCache = [];
 
-      // State
-      let activeJobId = null;
-      let pollingTimer = null;
-      let configuredRepoUrl = localStorage.getItem("model_bisect_repo_url") || "";
-
-      // DOM Elements
-      const repoUrlInput = document.getElementById("repoUrlInput");
-      const jobForm = document.getElementById("jobForm");
-      const targetInput = document.getElementById("targetInput");
-      const goodCommitInput = document.getElementById("goodCommitInput");
-      const badCommitInput = document.getElementById("badCommitInput");
-      const thresholdInput = document.getElementById("thresholdInput");
-      const submitBtn = document.getElementById("submitBtn");
-      const formError = document.getElementById("formError");
-      const refreshJobsBtn = document.getElementById("refreshJobsBtn");
-      const jobsTableBody = document.getElementById("jobsTableBody");
-
-      const noJobSelected = document.getElementById("noJobSelected");
-      const jobDetailsContent = document.getElementById("jobDetailsContent");
-      const activeJobStatusBadge = document.getElementById("activeJobStatusBadge");
-      const detailJobId = document.getElementById("detailJobId");
-      const detailTarget = document.getElementById("detailTarget");
-      const detailGoodCommit = document.getElementById("detailGoodCommit");
-      const detailBadCommit = document.getElementById("detailBadCommit");
-      const detailThreshold = document.getElementById("detailThreshold");
-      const detailProgressCount = document.getElementById("detailProgressCount");
-
-      const pollingBanner = document.getElementById("pollingBanner");
-      const pollingStatusTitle = document.getElementById("pollingStatusTitle");
-      const pollingCountDisplay = document.getElementById("pollingCountDisplay");
-
-      const culpritCard = document.getElementById("culpritCard");
-      const culpritShortSha = document.getElementById("culpritShortSha");
-      const culpritLinkContainer = document.getElementById("culpritLinkContainer");
-      const culpritMonotonicity = document.getElementById("culpritMonotonicity");
-      const culpritTotalEvals = document.getElementById("culpritTotalEvals");
-
-      const statusPlainBanner = document.getElementById("statusPlainBanner");
-      const statusPlainTitle = document.getElementById("statusPlainTitle");
-      const statusPlainMessage = document.getElementById("statusPlainMessage");
-
-      const chartSection = document.getElementById("chartSection");
-      const evalChart = document.getElementById("evalChart");
-      const evaluatedCommitsSection = document.getElementById("evaluatedCommitsSection");
-      const commitsTableBody = document.getElementById("commitsTableBody");
-
-      // Initialize Repo URL input
-      if (configuredRepoUrl) {
-        repoUrlInput.value = configuredRepoUrl;
-      }
-      repoUrlInput.addEventListener("input", function () {
-        configuredRepoUrl = repoUrlInput.value.trim();
-        localStorage.setItem("model_bisect_repo_url", configuredRepoUrl);
-        if (activeJobId) {
-          fetchJob(activeJobId, false);
+    // Helper: Create safe HTML element
+    function createSafeElement(tag, attrs, ...children) {
+      const el = document.createElement(tag);
+      if (attrs) {
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'className') {
+            el.className = v;
+          } else if (k === 'textContent') {
+            el.textContent = v;
+          } else if (k.startsWith('on') && typeof v === 'function') {
+            el.addEventListener(k.slice(2).toLowerCase(), v);
+          } else if (v !== null && v !== undefined) {
+            el.setAttribute(k, v);
+          }
         }
+      }
+      for (const child of children) {
+        if (child === null || child === undefined) continue;
+        if (typeof child === 'string' || typeof child === 'number') {
+          el.appendChild(document.createTextNode(String(child)));
+        } else if (child instanceof Node) {
+          el.appendChild(child);
+        }
+      }
+      return el;
+    }
+
+    // Helper: Create safe SVG element
+    function createSafeSvgElement(tag, attrs, ...children) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      if (attrs) {
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'textContent') {
+            el.textContent = v;
+          } else if (k.startsWith('on') && typeof v === 'function') {
+            el.addEventListener(k.slice(2).toLowerCase(), v);
+          } else if (v !== null && v !== undefined) {
+            el.setAttribute(k, v);
+          }
+        }
+      }
+      for (const child of children) {
+        if (child === null || child === undefined) continue;
+        if (typeof child === 'string' || typeof child === 'number') {
+          el.appendChild(document.createTextNode(String(child)));
+        } else if (child instanceof Node) {
+          el.appendChild(child);
+        }
+      }
+      return el;
+    }
+
+    // Create Status Pill
+    function renderStatusPill(status) {
+      const pill = createSafeElement('span', { className: `status-pill ${status}` });
+      if (status === 'running') {
+        const dot = createSafeElement('span', { className: 'pulse-dot' });
+        pill.appendChild(dot);
+      }
+      pill.appendChild(document.createTextNode(status || 'unknown'));
+      return pill;
+    }
+
+    // Format short commit
+    function shortCommit(hash) {
+      if (!hash) return '';
+      return hash.length > 8 ? hash.slice(0, 8) : hash;
+    }
+
+    // Load jobs list
+    async function fetchJobs() {
+      try {
+        const res = await fetch('/jobs');
+        if (!res.ok) return;
+        const data = await res.json();
+        jobsCache = Array.isArray(data) ? data : [];
+        renderJobsList();
+      } catch (err) {
+        console.error('Failed to fetch jobs:', err);
+      }
+    }
+
+    // Render Jobs List
+    function renderJobsList() {
+      const container = document.getElementById('jobs-list');
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+
+      const countBadge = document.getElementById('jobs-count');
+      countBadge.textContent = String(jobsCache.length);
+
+      if (jobsCache.length === 0) {
+        const empty = createSafeElement('div', {
+          className: 'job-item',
+          style: 'color: var(--text-dim); text-align: center; cursor: default;'
+        }, 'No jobs recorded yet');
+        container.appendChild(empty);
+        return;
+      }
+
+      for (const job of jobsCache) {
+        const isSelected = job.id === currentJobId;
+        const item = createSafeElement('div', {
+          className: `job-item ${isSelected ? 'selected' : ''}`,
+          onclick: () => selectJob(job.id)
+        });
+
+        // Header: target + status pill
+        const header = createSafeElement('div', { className: 'job-item-header' });
+        const targetTitle = createSafeElement('span', {}, job.target || 'target');
+        header.appendChild(targetTitle);
+        header.appendChild(renderStatusPill(job.status));
+        item.appendChild(header);
+
+        // Commits row
+        const commitsRow = createSafeElement('div', { className: 'job-item-commits' });
+        commitsRow.appendChild(document.createTextNode(`${shortCommit(job.good_commit)} → ${shortCommit(job.bad_commit)}`));
+        item.appendChild(commitsRow);
+
+        // Footer: progress or date
+        const footer = createSafeElement('div', { className: 'job-item-footer' });
+        const timeText = job.created_at ? new Date(job.created_at).toLocaleTimeString() : '';
+        const timeSpan = createSafeElement('span', {}, timeText);
+        footer.appendChild(timeSpan);
+
+        if (job.status === 'running' || job.status === 'queued') {
+          const prog = createSafeElement('span', {}, `evals: ${job.progress_count ?? 0}`);
+          footer.appendChild(prog);
+        } else if (job.result && job.result.status) {
+          const resStatus = createSafeElement('span', {}, `result: ${job.result.status}`);
+          footer.appendChild(resStatus);
+        }
+        item.appendChild(footer);
+
+        container.appendChild(item);
+      }
+    }
+
+    // Select and fetch a job
+    async function selectJob(jobId) {
+      currentJobId = jobId;
+      renderJobsList();
+      await fetchJobDetails(jobId);
+    }
+
+    // Fetch single job details
+    async function fetchJobDetails(jobId) {
+      try {
+        const res = await fetch(`/jobs/${jobId}`);
+        if (!res.ok) {
+          renderErrorState(`Failed to load job ${jobId}`);
+          return;
+        }
+        const job = await res.json();
+
+        // Update cache item
+        const idx = jobsCache.findIndex(j => j.id === jobId);
+        if (idx >= 0) {
+          jobsCache[idx] = job;
+          renderJobsList();
+        }
+
+        renderJobView(job);
+
+        // Manage polling
+        if (job.status === 'queued' || job.status === 'running') {
+          startPolling(jobId);
+        } else {
+          stopPolling();
+        }
+      } catch (err) {
+        console.error('Failed to fetch job:', err);
+        renderErrorState('Network error fetching job details');
+      }
+    }
+
+    // Polling control
+    function startPolling(jobId) {
+      stopPolling();
+      const indicator = document.getElementById('active-poll-indicator');
+      indicator.style.display = 'inline';
+
+      pollIntervalId = setInterval(async () => {
+        try {
+          const res = await fetch(`/jobs/${jobId}`);
+          if (!res.ok) return;
+          const job = await res.json();
+
+          const idx = jobsCache.findIndex(j => j.id === jobId);
+          if (idx >= 0) {
+            jobsCache[idx] = job;
+            renderJobsList();
+          }
+
+          if (currentJobId === jobId) {
+            renderJobView(job);
+          }
+
+          if (job.status === 'done' || job.status === 'failed') {
+            stopPolling();
+            fetchJobs();
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 2000);
+    }
+
+    function stopPolling() {
+      if (pollIntervalId) {
+        clearInterval(pollIntervalId);
+        pollIntervalId = null;
+      }
+      const indicator = document.getElementById('active-poll-indicator');
+      indicator.style.display = 'none';
+    }
+
+    // Render Empty State
+    function renderEmptyState() {
+      const view = document.getElementById('result-view');
+      while (view.firstChild) {
+        view.removeChild(view.firstChild);
+      }
+
+      const empty = createSafeElement('div', { className: 'empty-state' });
+      const icon = createSafeElement('div', { className: 'empty-icon' }, '✦');
+      const title = createSafeElement('h3', {}, 'No Bisect Job Selected');
+      const desc = createSafeElement('p', {}, 'Select a job from the recent jobs list on the left, or submit a new bisect run above.');
+
+      empty.appendChild(icon);
+      empty.appendChild(title);
+      empty.appendChild(desc);
+      view.appendChild(empty);
+    }
+
+    // Render Error State
+    function renderErrorState(message) {
+      const view = document.getElementById('result-view');
+      while (view.firstChild) {
+        view.removeChild(view.firstChild);
+      }
+
+      const panel = createSafeElement('div', { className: 'message-panel error-border' });
+      const title = createSafeElement('div', { className: 'message-status-title', style: 'color: var(--bad);' }, 'Error');
+      const body = createSafeElement('div', { className: 'message-body' }, message);
+      panel.appendChild(title);
+      panel.appendChild(body);
+      view.appendChild(panel);
+    }
+
+    // Render Main Job View
+    function renderJobView(job) {
+      const view = document.getElementById('result-view');
+      while (view.firstChild) {
+        view.removeChild(view.firstChild);
+      }
+
+      // 1. Header Card
+      const headerCard = createSafeElement('div', { className: 'result-header-card' });
+      const metaBlock = createSafeElement('div', { className: 'result-meta-block' });
+      const targetTitle = createSafeElement('div', { className: 'result-meta-target' });
+      targetTitle.appendChild(document.createTextNode(job.target || 'Unnamed Target'));
+      targetTitle.appendChild(renderStatusPill(job.status));
+      metaBlock.appendChild(targetTitle);
+
+      const subLine = createSafeElement('div', { className: 'result-meta-sub' });
+      subLine.appendChild(document.createTextNode(`ID: ${job.id} | Range: ${shortCommit(job.good_commit)}..${shortCommit(job.bad_commit)}`));
+      if (job.threshold_override !== null && job.threshold_override !== undefined) {
+        subLine.appendChild(document.createTextNode(` | Threshold Override: ${job.threshold_override}`));
+      }
+      metaBlock.appendChild(subLine);
+      headerCard.appendChild(metaBlock);
+
+      // Timing info
+      const timeBlock = createSafeElement('div', { style: 'text-align: right; font-size: 0.8rem; color: var(--text-dim);' });
+      if (job.started_at) {
+        const started = new Date(job.started_at).toLocaleTimeString();
+        timeBlock.appendChild(createSafeElement('div', {}, `Started: ${started}`));
+      }
+      if (job.finished_at) {
+        const finished = new Date(job.finished_at).toLocaleTimeString();
+        timeBlock.appendChild(createSafeElement('div', {}, `Finished: ${finished}`));
+      }
+      headerCard.appendChild(timeBlock);
+      view.appendChild(headerCard);
+
+      // 2. State-dependent View (Queued / Running / Done / Failed)
+      if (job.status === 'queued' || job.status === 'running') {
+        const loading = createSafeElement('div', { className: 'loading-state' });
+        const progressInfo = createSafeElement('div', { className: 'progress-info' });
+        progressInfo.appendChild(createSafeElement('span', { className: 'pulse-dot' }));
+        const progressText = job.status === 'queued'
+          ? 'Job queued, waiting for worker...'
+          : `Bisect in progress: ${job.progress_count ?? 0} evaluation(s) completed`;
+        progressInfo.appendChild(createSafeElement('strong', {}, progressText));
+        loading.appendChild(progressInfo);
+
+        // Shimmer skeleton placeholders
+        loading.appendChild(createSafeElement('div', { className: 'skeleton-bar', style: 'height: 90px;' }));
+        loading.appendChild(createSafeElement('div', { className: 'skeleton-bar', style: 'height: 240px;' }));
+        view.appendChild(loading);
+        return;
+      }
+
+      if (job.status === 'failed') {
+        const panel = createSafeElement('div', { className: 'message-panel error-border' });
+        const title = createSafeElement('div', { className: 'message-status-title', style: 'color: var(--bad);' }, 'Job Failed');
+        const body = createSafeElement('div', { className: 'message-body' }, job.error_message || 'Unknown server error');
+        panel.appendChild(title);
+        panel.appendChild(body);
+        view.appendChild(panel);
+        return;
+      }
+
+      // Status is done
+      const res = job.result;
+      if (!res) {
+        const panel = createSafeElement('div', { className: 'message-panel' });
+        panel.appendChild(createSafeElement('div', { className: 'message-status-title' }, 'Completed'));
+        panel.appendChild(createSafeElement('div', { className: 'message-body' }, 'Job marked done but no result payload attached.'));
+        view.appendChild(panel);
+        return;
+      }
+
+      // 3. Culprit Card vs Message Panel
+      if (res.status === 'found') {
+        const culpritCard = createSafeElement('div', { className: 'culprit-card' });
+        const label = createSafeElement('div', { className: 'culprit-label' }, 'Culprit Commit Identified');
+        culpritCard.appendChild(label);
+
+        const main = createSafeElement('div', { className: 'culprit-main' });
+        const shortH = createSafeElement('div', { className: 'culprit-short-hash' }, shortCommit(res.first_bad_commit));
+        main.appendChild(shortH);
+
+        const fullHWrap = createSafeElement('div', { className: 'culprit-full-hash-wrap' });
+        const fullH = createSafeElement('span', { className: 'culprit-full-hash' }, res.first_bad_commit || '');
+        fullHWrap.appendChild(fullH);
+
+        const copyBtn = createSafeElement('button', {
+          className: 'btn-copy',
+          onclick: () => {
+            if (res.first_bad_commit && navigator.clipboard) {
+              navigator.clipboard.writeText(res.first_bad_commit);
+              copyBtn.textContent = 'Copied!';
+              setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+              }, 1500);
+            }
+          }
+        }, 'Copy');
+        fullHWrap.appendChild(copyBtn);
+        main.appendChild(fullHWrap);
+        culpritCard.appendChild(main);
+
+        const badges = createSafeElement('div', { className: 'culprit-badges' });
+        const monoBadge = createSafeElement('div', {
+          className: `badge-mono ${res.monotonicity_verified ? 'verified' : 'unverified'}`
+        }, res.monotonicity_verified ? 'Monotonicity: Verified' : 'Monotonicity: Unverified');
+        badges.appendChild(monoBadge);
+
+        const countBadge = createSafeElement('div', {
+          className: 'badge-count'
+        }, `Total Evaluated: ${res.total_eval_count ?? (res.evaluated_commits ? res.evaluated_commits.length : 0)} commits`);
+        badges.appendChild(countBadge);
+
+        culpritCard.appendChild(badges);
+        view.appendChild(culpritCard);
+      } else {
+        // non_monotonic, not_found, error: message panel without culprit card
+        const isError = res.status === 'error';
+        const isNonMono = res.status === 'non_monotonic';
+        const borderClass = isError ? 'error-border' : (isNonMono ? 'warning-border' : '');
+        const panel = createSafeElement('div', { className: `message-panel ${borderClass}` });
+
+        const titleText = isNonMono
+          ? 'Status: Non-Monotonic Regression'
+          : (res.status === 'not_found' ? 'Status: Not Found' : `Status: ${res.status}`);
+        const title = createSafeElement('div', { className: 'message-status-title' }, titleText);
+        panel.appendChild(title);
+
+        const messageText = res.error_message || (isNonMono
+          ? 'Bisect detected non-monotonic performance across commits. Regression is not cleanly localized to a single culprit.'
+          : 'No culprit commit was isolated.');
+        const body = createSafeElement('div', { className: 'message-body' }, messageText);
+        panel.appendChild(body);
+        view.appendChild(panel);
+      }
+
+      // 4. Trajectory SVG Chart
+      const evals = res.evaluated_commits || [];
+      if (evals.length > 0) {
+        const chartCard = createSafeElement('div', { className: 'chart-card' });
+        const chartHeader = createSafeElement('div', { className: 'chart-header' });
+        const chartTitle = createSafeElement('div', { className: 'chart-title' }, 'Evaluation Trajectory');
+        chartHeader.appendChild(chartTitle);
+
+        // Legend
+        const legend = createSafeElement('div', { className: 'chart-legend' });
+        const legGood = createSafeElement('div', { className: 'legend-item' });
+        legGood.appendChild(createSafeElement('div', { className: 'legend-dot good' }));
+        legGood.appendChild(document.createTextNode('Good'));
+        legend.appendChild(legGood);
+
+        const legBad = createSafeElement('div', { className: 'legend-item' });
+        legBad.appendChild(createSafeElement('div', { className: 'legend-dot bad' }));
+        legBad.appendChild(document.createTextNode('Bad'));
+        legend.appendChild(legBad);
+
+        const legSkip = createSafeElement('div', { className: 'legend-item' });
+        legSkip.appendChild(createSafeElement('div', { className: 'legend-dot skip' }));
+        legSkip.appendChild(document.createTextNode('Skipped'));
+        legend.appendChild(legSkip);
+
+        if (job.threshold_override !== null && job.threshold_override !== undefined) {
+          const legThresh = createSafeElement('div', { className: 'legend-item' });
+          legThresh.appendChild(createSafeElement('div', { className: 'legend-line' }));
+          legThresh.appendChild(document.createTextNode(`Threshold (${job.threshold_override})`));
+          legend.appendChild(legThresh);
+        }
+
+        chartHeader.appendChild(legend);
+        chartCard.appendChild(chartHeader);
+
+        // Chart SVG Container
+        const chartContainer = createSafeElement('div', { className: 'chart-container' });
+        const tooltip = createSafeElement('div', { className: 'chart-tooltip' });
+        chartContainer.appendChild(tooltip);
+
+        const svg = renderTrajectorySvg(evals, job.threshold_override, tooltip, chartContainer);
+        chartContainer.appendChild(svg);
+        chartCard.appendChild(chartContainer);
+        view.appendChild(chartCard);
+
+        // 5. Evaluated Commits Table
+        const tableCard = createSafeElement('div', { className: 'table-card' });
+        const table = createSafeElement('table', { className: 'commits-table' });
+        const thead = createSafeElement('thead');
+        const trHead = createSafeElement('tr');
+        trHead.appendChild(createSafeElement('th', {}, '#'));
+        trHead.appendChild(createSafeElement('th', {}, 'Commit'));
+        trHead.appendChild(createSafeElement('th', {}, 'Status'));
+        trHead.appendChild(createSafeElement('th', {}, 'Metric'));
+        trHead.appendChild(createSafeElement('th', {}, 'Duration'));
+        thead.appendChild(trHead);
+        table.appendChild(thead);
+
+        const tbody = createSafeElement('tbody');
+        evals.forEach((ev, idx) => {
+          const tr = createSafeElement('tr');
+          tr.appendChild(createSafeElement('td', {}, String(idx)));
+          tr.appendChild(createSafeElement('td', {}, shortCommit(ev.commit)));
+
+          const statusTd = createSafeElement('td');
+          const pill = createSafeElement('span', { className: `status-pill ${ev.status}` }, ev.status);
+          statusTd.appendChild(pill);
+          tr.appendChild(statusTd);
+
+          const metricVal = ev.metric !== null && ev.metric !== undefined ? Number(ev.metric).toFixed(4) : (ev.skip_reason || 'N/A');
+          tr.appendChild(createSafeElement('td', {}, metricVal));
+
+          const durVal = ev.duration !== null && ev.duration !== undefined ? `${Number(ev.duration).toFixed(2)}s` : '-';
+          tr.appendChild(createSafeElement('td', {}, durVal));
+
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        tableCard.appendChild(table);
+        view.appendChild(tableCard);
+      }
+    }
+
+    // Render Trajectory SVG
+    function renderTrajectorySvg(evals, thresholdOverride, tooltip, container) {
+      const width = 800;
+      const height = 300;
+      const padLeft = 65;
+      const padRight = 35;
+      const padTop = 30;
+      const padBottom = 45;
+
+      const chartW = width - padLeft - padRight;
+      const chartH = height - padTop - padBottom;
+
+      // Extract valid metrics
+      const numericMetrics = evals.filter(e => e.metric !== null && typeof e.metric === 'number').map(e => e.metric);
+      if (thresholdOverride !== null && thresholdOverride !== undefined) {
+        numericMetrics.push(Number(thresholdOverride));
+      }
+
+      let minM = numericMetrics.length ? Math.min(...numericMetrics) : 0;
+      let maxM = numericMetrics.length ? Math.max(...numericMetrics) : 1;
+      if (minM === maxM) {
+        minM -= 0.1;
+        maxM += 0.1;
+      }
+      const metricPadding = (maxM - minM) * 0.12 || 0.05;
+      minM -= metricPadding;
+      maxM += metricPadding;
+
+      const scaleX = (idx) => padLeft + (evals.length > 1 ? (idx / (evals.length - 1)) * chartW : chartW / 2);
+      const scaleY = (m) => padTop + chartH - ((m - minM) / (maxM - minM)) * chartH;
+
+      const svg = createSafeSvgElement('svg', {
+        className: 'trajectory-svg',
+        viewBox: `0 0 ${width} ${height}`,
+        preserveAspectRatio: 'xMidYMid meet'
       });
 
-      // Helper: Safe text setting (no innerHTML with API data)
-      function setText(element, text) {
-        element.textContent = text == null ? "" : String(text);
-      }
+      // Grid Lines & Y-Axis Labels (4 ticks)
+      const numTicks = 4;
+      for (let i = 0; i <= numTicks; i++) {
+        const val = minM + (i / numTicks) * (maxM - minM);
+        const y = scaleY(val);
 
-      function clearElement(element) {
-        while (element.firstChild) {
-          element.removeChild(element.firstChild);
-        }
-      }
-
-      function createBadge(status) {
-        const span = document.createElement("span");
-        span.className = "badge badge-" + String(status).toLowerCase();
-        span.textContent = String(status);
-        return span;
-      }
-
-      // Fetch Recent Jobs
-      async function loadJobs() {
-        try {
-          const res = await fetch("/jobs");
-          if (!res.ok) {
-            throw new Error("HTTP " + res.status);
-          }
-          const jobs = await res.json();
-          renderJobsList(jobs);
-          if (!activeJobId) {
-            const hashId = window.location.hash ? window.location.hash.substring(1).trim() : null;
-            if (hashId) {
-              selectJob(hashId);
-            } else if (jobs && jobs.length > 0) {
-              selectJob(jobs[0].id);
-            }
-          }
-        } catch (err) {
-          clearElement(jobsTableBody);
-          const tr = document.createElement("tr");
-          const td = document.createElement("td");
-          td.colSpan = 4;
-          td.className = "empty-state";
-          td.textContent = "Failed to load jobs: " + err.message;
-          tr.appendChild(td);
-          jobsTableBody.appendChild(tr);
-        }
-      }
-
-      function renderJobsList(jobs) {
-        clearElement(jobsTableBody);
-        if (!jobs || jobs.length === 0) {
-          const tr = document.createElement("tr");
-          const td = document.createElement("td");
-          td.colSpan = 4;
-          td.className = "empty-state";
-          td.textContent = "No jobs submitted yet";
-          tr.appendChild(td);
-          jobsTableBody.appendChild(tr);
-          return;
-        }
-
-        jobs.forEach(function (job) {
-          const tr = document.createElement("tr");
-          if (job.id === activeJobId) {
-            tr.className = "selected";
-          }
-          tr.addEventListener("click", function () {
-            selectJob(job.id);
-          });
-
-          // Short ID
-          const tdId = document.createElement("td");
-          const shortId = job.id ? job.id.substring(0, 8) : "";
-          tdId.textContent = shortId;
-          tdId.title = job.id;
-
-          // Target
-          const tdTarget = document.createElement("td");
-          tdTarget.textContent = job.target;
-
-          // Status Badge
-          const tdStatus = document.createElement("td");
-          tdStatus.appendChild(createBadge(job.status));
-
-          // Progress
-          const tdProgress = document.createElement("td");
-          tdProgress.textContent = String(job.progress_count || 0);
-
-          tr.appendChild(tdId);
-          tr.appendChild(tdTarget);
-          tr.appendChild(tdStatus);
-          tr.appendChild(tdProgress);
-          jobsTableBody.appendChild(tr);
+        const gridLine = createSafeSvgElement('line', {
+          className: 'svg-grid-line',
+          x1: padLeft,
+          y1: y,
+          x2: width - padRight,
+          y2: y
         });
-      }
+        svg.appendChild(gridLine);
 
-      // Select and Load Job
-      function selectJob(jobId) {
-        activeJobId = jobId;
-        // Update selection highlight in table
-        const rows = jobsTableBody.querySelectorAll("tr");
-        rows.forEach(function (r) {
-          r.classList.remove("selected");
+        const label = createSafeSvgElement('text', {
+          className: 'svg-axis-label',
+          x: padLeft - 10,
+          y: y + 3,
+          'text-anchor': 'end',
+          textContent: val.toFixed(2)
         });
-        loadJobs(); // refresh list selection state
-        stopPolling();
-        fetchJob(jobId, true);
+        svg.appendChild(label);
       }
 
-      async function fetchJob(jobId, startPollIfNeeded) {
-        try {
-          const res = await fetch("/jobs/" + encodeURIComponent(jobId));
-          if (!res.ok) {
-            throw new Error("HTTP " + res.status);
-          }
-          const job = await res.json();
-          renderJobDetails(job);
+      // X-Axis Labels (Step Indices)
+      evals.forEach((ev, idx) => {
+        const x = scaleX(idx);
+        const label = createSafeSvgElement('text', {
+          className: 'svg-axis-label',
+          x: x,
+          y: height - 15,
+          'text-anchor': 'middle',
+          textContent: `step ${idx}`
+        });
+        svg.appendChild(label);
+      });
 
-          if (startPollIfNeeded && (job.status === "queued" || job.status === "running")) {
-            startPolling(jobId);
-          }
-        } catch (err) {
-          noJobSelected.style.display = "block";
-          jobDetailsContent.style.display = "none";
-          setText(noJobSelected, "Failed to load job: " + err.message);
-        }
+      // Threshold Line (only if thresholdOverride is set)
+      if (thresholdOverride !== null && thresholdOverride !== undefined) {
+        const threshY = scaleY(Number(thresholdOverride));
+        const threshLine = createSafeSvgElement('line', {
+          className: 'svg-threshold-line',
+          x1: padLeft,
+          y1: threshY,
+          x2: width - padRight,
+          y2: threshY
+        });
+        svg.appendChild(threshLine);
+
+        const threshText = createSafeSvgElement('text', {
+          className: 'svg-axis-label',
+          x: width - padRight - 5,
+          y: threshY - 6,
+          'text-anchor': 'end',
+          fill: '#3b82f6',
+          textContent: `Threshold: ${Number(thresholdOverride).toFixed(3)}`
+        });
+        svg.appendChild(threshText);
       }
 
-      function startPolling(jobId) {
-        stopPolling();
-        pollingTimer = setInterval(function () {
-          fetch("/jobs/" + encodeURIComponent(jobId))
-            .then(function (res) { return res.json(); })
-            .then(function (job) {
-              renderJobDetails(job);
-              if (job.status !== "queued" && job.status !== "running") {
-                stopPolling();
-                loadJobs(); // update list state
-              }
-            })
-            .catch(function () {
-              stopPolling();
-            });
-        }, 2000);
-      }
+      // Trajectory Lines (connecting consecutive non-skipped points)
+      let currentPath = [];
+      const drawPolyline = (pts) => {
+        if (pts.length < 2) return;
+        const pointsAttr = pts.map(p => `${p.x},${p.y}`).join(' ');
+        const polyline = createSafeSvgElement('polyline', {
+          className: 'svg-line-trajectory',
+          points: pointsAttr,
+          fill: 'none',
+          stroke: 'rgba(255, 255, 255, 0.35)',
+          'stroke-width': '2'
+        });
+        svg.appendChild(polyline);
+      };
 
-      function stopPolling() {
-        if (pollingTimer) {
-          clearInterval(pollingTimer);
-          pollingTimer = null;
-        }
-      }
-
-      // Render Job Details & Result View
-      function renderJobDetails(job) {
-        noJobSelected.style.display = "none";
-        jobDetailsContent.style.display = "flex";
-
-        // Status Badge
-        clearElement(activeJobStatusBadge);
-        activeJobStatusBadge.appendChild(createBadge(job.status));
-
-        // Metadata
-        setText(detailJobId, job.id);
-        setText(detailTarget, job.target);
-        setText(detailGoodCommit, job.good_commit);
-        setText(detailBadCommit, job.bad_commit);
-        setText(detailThreshold, job.threshold_override != null ? job.threshold_override : "(Default target threshold)");
-        setText(detailProgressCount, job.progress_count);
-
-        // Polling Progress Banner
-        if (job.status === "queued" || job.status === "running") {
-          pollingBanner.style.display = "flex";
-          setText(pollingStatusTitle, "Job is " + job.status + "...");
-          setText(pollingCountDisplay, (job.progress_count || 0) + " evaluations");
+      evals.forEach((ev, idx) => {
+        if (ev.status !== 'skip' && ev.metric !== null && typeof ev.metric === 'number') {
+          currentPath.push({ x: scaleX(idx), y: scaleY(ev.metric) });
         } else {
-          pollingBanner.style.display = "none";
+          drawPolyline(currentPath);
+          currentPath = [];
         }
+      });
+      drawPolyline(currentPath);
 
-        const res = job.result;
+      // Trajectory Points
+      evals.forEach((ev, idx) => {
+        const cx = scaleX(idx);
+        const hasMetric = ev.metric !== null && typeof ev.metric === 'number';
+        const cy = hasMetric ? scaleY(ev.metric) : scaleY((minM + maxM) / 2);
 
-        // Reset views
-        culpritCard.style.display = "none";
-        statusPlainBanner.style.display = "none";
-        statusPlainBanner.className = "status-plain-banner";
-        chartSection.style.display = "none";
-        evaluatedCommitsSection.style.display = "none";
+        let color = '#64748b'; // skipped
+        if (ev.status === 'good') color = '#10b981';
+        else if (ev.status === 'bad') color = '#ef4444';
 
-        if (job.status === "failed") {
-          // Job failed at worker level
-          statusPlainBanner.style.display = "flex";
-          statusPlainBanner.className = "status-plain-banner error";
-          setText(statusPlainTitle, "Job Failed");
-          setText(statusPlainMessage, job.error_message || "No error details available");
-          return;
-        }
-
-        if (!res) {
-          return;
-        }
-
-        // Feature 3: Result View logic
-        if (res.status === "found") {
-          // Culprit Card
-          culpritCard.style.display = "flex";
-          const sha = res.first_bad_commit || "Unknown";
-          const shortSha = sha.length >= 7 ? sha.substring(0, 7) : sha;
-          setText(culpritShortSha, shortSha);
-
-          clearElement(culpritLinkContainer);
-          if (configuredRepoUrl && sha !== "Unknown") {
-            const cleanBase = configuredRepoUrl.replace(/\/+$/, "");
-            const a = document.createElement("a");
-            a.className = "culprit-link";
-            a.href = cleanBase + "/commit/" + encodeURIComponent(sha);
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = "View on GitHub (" + sha + ")";
-            culpritLinkContainer.appendChild(a);
-          } else {
-            const span = document.createElement("span");
-            span.style.color = "var(--text-muted)";
-            span.style.fontSize = "0.8rem";
-            span.textContent = sha;
-            culpritLinkContainer.appendChild(span);
-          }
-
-          setText(culpritMonotonicity, String(res.monotonicity_verified));
-          setText(culpritTotalEvals, String(res.total_eval_count));
-        } else {
-          // Non-found, non_monotonic, or error: plain text status & error_message, NO culprit card
-          statusPlainBanner.style.display = "flex";
-          if (res.status === "error") {
-            statusPlainBanner.className = "status-plain-banner error";
-          } else if (res.status === "non_monotonic") {
-            statusPlainBanner.className = "status-plain-banner warn";
-          }
-          setText(statusPlainTitle, "Bisect Status: " + res.status);
-          const msg = res.error_message || (res.status === "non_monotonic" ? "Non-monotonic history detected during bisection." : "No culprit commit was found.");
-          setText(statusPlainMessage, msg);
-        }
-
-        // Evaluation Chart & Commits Table
-        if (res.evaluated_commits && res.evaluated_commits.length > 0) {
-          chartSection.style.display = "flex";
-          evaluatedCommitsSection.style.display = "flex";
-          renderSvgChart(res.evaluated_commits, job.threshold_override);
-          renderCommitsTable(res.evaluated_commits);
-        }
-      }
-
-      // Feature 3: Hand-written SVG Chart
-      function renderSvgChart(commits, threshold) {
-        clearElement(evalChart);
-        const svgNS = "http://www.w3.org/2000/svg";
-
-        const width = 700;
-        const height = 240;
-        const paddingLeft = 55;
-        const paddingRight = 40;
-        const paddingTop = 30;
-        const paddingBottom = 45;
-
-        const plotWidth = width - paddingLeft - paddingRight;
-        const plotHeight = height - paddingTop - paddingBottom;
-
-        // Metric bounds across non-skipped commits
-        const validMetrics = [];
-        commits.forEach(function (c) {
-          if (c.status !== "skipped" && typeof c.metric === "number") {
-            validMetrics.push(c.metric);
-          }
+        const circle = createSafeSvgElement('circle', {
+          className: 'svg-point',
+          cx: cx,
+          cy: cy,
+          r: 5,
+          fill: color,
+          stroke: '#090d16',
+          'stroke-width': 2,
+          tabindex: '0',
+          role: 'button',
+          'aria-label': `Step ${idx}, commit ${shortCommit(ev.commit)}, status ${ev.status}`
         });
 
-        let minY = 0.0;
-        let maxY = 1.0;
-        if (validMetrics.length > 0) {
-          minY = Math.min.apply(null, validMetrics);
-          maxY = Math.max.apply(null, validMetrics);
-          if (threshold != null) {
-            minY = Math.min(minY, threshold);
-            maxY = Math.max(maxY, threshold);
-          }
-          // Add 10% breathing room
-          const range = maxY - minY || 0.1;
-          minY = Math.max(0, minY - range * 0.15);
-          maxY = maxY + range * 0.15;
-        }
-
-        function getX(index) {
-          if (commits.length <= 1) return paddingLeft + plotWidth / 2;
-          return paddingLeft + (index / (commits.length - 1)) * plotWidth;
-        }
-
-        function getY(val) {
-          if (maxY === minY) return paddingTop + plotHeight / 2;
-          return paddingTop + plotHeight - ((val - minY) / (maxY - minY)) * plotHeight;
-        }
-
-        // Background grid lines (Y-axis)
-        const ticks = 4;
-        for (let i = 0; i <= ticks; i++) {
-          const tVal = minY + (i / ticks) * (maxY - minY);
-          const y = getY(tVal);
-
-          const line = document.createElementNS(svgNS, "line");
-          line.setAttribute("x1", paddingLeft);
-          line.setAttribute("x2", width - paddingRight);
-          line.setAttribute("y1", y);
-          line.setAttribute("y2", y);
-          line.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
-          line.setAttribute("stroke-dasharray", "3 3");
-          evalChart.appendChild(line);
-
-          const label = document.createElementNS(svgNS, "text");
-          label.setAttribute("x", paddingLeft - 8);
-          label.setAttribute("y", y + 3);
-          label.setAttribute("fill", "#6b7280");
-          label.setAttribute("font-size", "10");
-          label.setAttribute("text-anchor", "end");
-          label.textContent = tVal.toFixed(3);
-          evalChart.appendChild(label);
-        }
-
-        // Optional Threshold Line
-        if (threshold != null && threshold >= minY && threshold <= maxY) {
-          const tY = getY(threshold);
-          const tLine = document.createElementNS(svgNS, "line");
-          tLine.setAttribute("x1", paddingLeft);
-          tLine.setAttribute("x2", width - paddingRight);
-          tLine.setAttribute("y1", tY);
-          tLine.setAttribute("y2", tY);
-          tLine.setAttribute("stroke", "#f59e0b");
-          tLine.setAttribute("stroke-width", "1.5");
-          tLine.setAttribute("stroke-dasharray", "5 3");
-          evalChart.appendChild(tLine);
-
-          const tText = document.createElementNS(svgNS, "text");
-          tText.setAttribute("x", width - paddingRight + 4);
-          tText.setAttribute("y", tY + 3);
-          tText.setAttribute("fill", "#f59e0b");
-          tText.setAttribute("font-size", "9");
-          tText.textContent = "Thresh: " + threshold;
-          evalChart.appendChild(tText);
-        }
-
-        // Draw line connecting non-skipped consecutive points
-        let currentPath = [];
-        commits.forEach(function (c, idx) {
-          if (c.status !== "skipped" && typeof c.metric === "number") {
-            const x = getX(idx);
-            const y = getY(c.metric);
-            currentPath.push({ x: x, y: y });
-          } else {
-            // Skipped breaks line continuity
-            if (currentPath.length > 1) {
-              drawSegment(currentPath);
-            }
-            currentPath = [];
-          }
-        });
-        if (currentPath.length > 1) {
-          drawSegment(currentPath);
-        }
-
-        function drawSegment(pts) {
-          const path = document.createElementNS(svgNS, "path");
-          let d = "M " + pts[0].x + " " + pts[0].y;
-          for (let p = 1; p < pts.length; p++) {
-            d += " L " + pts[p].x + " " + pts[p].y;
-          }
-          path.setAttribute("d", d);
-          path.setAttribute("fill", "none");
-          path.setAttribute("stroke", "#3b82f6");
-          path.setAttribute("stroke-width", "2");
-          evalChart.appendChild(path);
-        }
-
-        // Draw Points & X-axis Labels
-        const skippedY = height - paddingBottom + 12; // baseline for skipped points
-
-        commits.forEach(function (c, idx) {
-          const x = getX(idx);
-          let y;
-          let color;
-
-          if (c.status === "good") {
-            y = getY(c.metric);
-            color = "var(--good-green)";
-          } else if (c.status === "bad") {
-            y = getY(c.metric);
-            color = "var(--bad-red)";
-          } else {
-            // Skipped commit: shown in gray with no line
-            y = skippedY;
-            color = "var(--skipped-gray)";
+        // Hover & Focus Tooltip Handlers
+        const showTooltip = () => {
+          while (tooltip.firstChild) {
+            tooltip.removeChild(tooltip.firstChild);
           }
 
-          // Circle point
-          const circle = document.createElementNS(svgNS, "circle");
-          circle.setAttribute("cx", x);
-          circle.setAttribute("cy", y);
-          circle.setAttribute("r", "5.5");
-          circle.setAttribute("fill", color);
-          circle.setAttribute("stroke", "#0b0f19");
-          circle.setAttribute("stroke-width", "2");
+          tooltip.appendChild(createSafeElement('p', { style: 'font-weight: 700;' }, `Commit: ${shortCommit(ev.commit)}`));
+          tooltip.appendChild(createSafeElement('p', {}, `Status: ${ev.status}`));
+          if (hasMetric) {
+            tooltip.appendChild(createSafeElement('p', {}, `Metric: ${Number(ev.metric).toFixed(4)}`));
+          }
+          if (ev.duration !== null && ev.duration !== undefined) {
+            tooltip.appendChild(createSafeElement('p', {}, `Duration: ${Number(ev.duration).toFixed(2)}s`));
+          }
+          if (ev.skip_reason) {
+            tooltip.appendChild(createSafeElement('p', { style: 'color: #f87171;' }, `Skip: ${ev.skip_reason}`));
+          }
 
-          // Point title (tooltip)
-          const title = document.createElementNS(svgNS, "title");
-          const shortHash = c.commit ? c.commit.substring(0, 7) : "";
-          const metricText = c.status === "skipped" ? "Skipped (" + (c.skip_reason || "unknown") + ")" : "Metric: " + c.metric;
-          title.textContent = "Commit: " + shortHash + " (" + c.status + ")\n" + metricText;
-          circle.appendChild(title);
+          tooltip.style.display = 'block';
 
-          evalChart.appendChild(circle);
+          // Position tooltip relative to container
+          const rect = container.getBoundingClientRect();
+          const svgRect = svg.getBoundingClientRect();
+          const px = (cx / width) * svgRect.width;
+          const py = (cy / height) * svgRect.height;
 
-          // X-Axis Commit Label
-          const xLabel = document.createElementNS(svgNS, "text");
-          xLabel.setAttribute("x", x);
-          xLabel.setAttribute("y", height - paddingBottom + 28);
-          xLabel.setAttribute("fill", "#9ca3af");
-          xLabel.setAttribute("font-size", "10");
-          xLabel.setAttribute("text-anchor", "middle");
-          xLabel.setAttribute("font-family", "monospace");
-          xLabel.textContent = shortHash;
-          evalChart.appendChild(xLabel);
-        });
-      }
+          let left = px - 40;
+          let top = py - 60;
+          if (left < 10) left = 10;
+          if (left + 150 > rect.width) left = rect.width - 160;
 
-      // Render Evaluated Commits Table
-      function renderCommitsTable(commits) {
-        clearElement(commitsTableBody);
-        commits.forEach(function (c, idx) {
-          const tr = document.createElement("tr");
-
-          const tdIdx = document.createElement("td");
-          tdIdx.textContent = String(idx);
-
-          const tdCommit = document.createElement("td");
-          const shortSha = c.commit ? c.commit.substring(0, 7) : "";
-          tdCommit.textContent = shortSha;
-          tdCommit.title = c.commit;
-
-          const tdMetric = document.createElement("td");
-          tdMetric.textContent = c.metric != null ? String(c.metric) : "-";
-
-          const tdStatus = document.createElement("td");
-          tdStatus.appendChild(createBadge(c.status));
-
-          const tdDuration = document.createElement("td");
-          tdDuration.textContent = typeof c.duration === "number" ? c.duration.toFixed(3) + "s" : "-";
-
-          const tdDetails = document.createElement("td");
-          tdDetails.textContent = c.skip_reason || (c.eval_runs ? "runs: " + c.eval_runs.join(", ") : "");
-          tdDetails.style.color = "var(--text-muted)";
-
-          tr.appendChild(tdIdx);
-          tr.appendChild(tdCommit);
-          tr.appendChild(tdMetric);
-          tr.appendChild(tdStatus);
-          tr.appendChild(tdDuration);
-          tr.appendChild(tdDetails);
-
-          commitsTableBody.appendChild(tr);
-        });
-      }
-
-      // Feature 1: Job Form Submit
-      jobForm.addEventListener("submit", async function (e) {
-        e.preventDefault();
-        setText(formError, "");
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Submitting...";
-
-        const payload = {
-          target: targetInput.value.trim(),
-          good_commit: goodCommitInput.value.trim(),
-          bad_commit: badCommitInput.value.trim()
+          tooltip.style.left = `${left}px`;
+          tooltip.style.top = `${top}px`;
         };
 
-        const thVal = thresholdInput.value.trim();
-        if (thVal !== "") {
-          const num = parseFloat(thVal);
-          if (!isNaN(num)) {
-            payload.threshold = num;
-          }
-        }
+        const hideTooltip = () => {
+          tooltip.style.display = 'none';
+        };
 
-        try {
-          const res = await fetch("/jobs", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
+        circle.addEventListener('mouseenter', showTooltip);
+        circle.addEventListener('mouseleave', hideTooltip);
+        circle.addEventListener('focus', showTooltip);
+        circle.addEventListener('blur', hideTooltip);
 
-          if (!res.ok) {
-            const errData = await res.json().catch(function () { return {}; });
-            throw new Error(errData.detail || "Submission failed with status " + res.status);
-          }
-
-          const createdJob = await res.json();
-          // Reset form inputs except target
-          goodCommitInput.value = "";
-          badCommitInput.value = "";
-          thresholdInput.value = "";
-
-          // Select created job and start polling
-          selectJob(createdJob.id);
-        } catch (err) {
-          setText(formError, err.message);
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Job";
-        }
+        svg.appendChild(circle);
       });
 
-      // Refresh Button
-      refreshJobsBtn.addEventListener("click", function () {
-        loadJobs();
-      });
+      return svg;
+    }
 
-      // Initial Load
-      loadJobs();
+    // Form submission
+    document.getElementById('job-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('form-error');
+      errBox.style.display = 'none';
+      errBox.textContent = '';
+
+      const targetInput = document.getElementById('input-target').value.trim();
+      const goodInput = document.getElementById('input-good').value.trim();
+      const badInput = document.getElementById('input-bad').value.trim();
+      const threshInput = document.getElementById('input-threshold').value.trim();
+
+      const payload = {
+        target: targetInput,
+        good_commit: goodInput,
+        bad_commit: badInput
+      };
+
+      if (threshInput !== '') {
+        const num = parseFloat(threshInput);
+        if (!isNaN(num)) {
+          payload.threshold = num;
+        }
+      }
+
+      const submitBtn = document.getElementById('btn-submit-job');
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail || `Request failed with status ${res.status}`);
+        }
+
+        const createdJob = await res.json();
+        await fetchJobs();
+        selectJob(createdJob.id);
+      } catch (err) {
+        errBox.textContent = err.message || 'Submission error';
+        errBox.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Initial setup
+    (async function init() {
+      renderEmptyState();
+      await fetchJobs();
+      if (jobsCache.length > 0) {
+        selectJob(jobsCache[0].id);
+      }
     })();
   </script>
 </body>
