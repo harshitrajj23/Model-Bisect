@@ -1,4 +1,5 @@
 # Repository-level configuration for Model Bisect GitHub Action / CLI
+# Smoke test trigger for GitHub Actions workflow
 eval_command = "python eval.py"
 metric_name = "accuracy"
 threshold = 0.90
