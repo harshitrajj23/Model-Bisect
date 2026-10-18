@@ -49,7 +49,11 @@ curl -s http://127.0.0.1:8000/health > docs/health.json
 - **Goal**: Confirm endpoint validation rejects `bad_commit` that evaluates as `good` without entering binary search.
 - **Request**: Target `alternating_target`, `good_commit=c0` (`5e80c65`), `bad_commit=c4` (`577cf2c`).
 - **Result**: Job transitioned to status `failed` with error message `Bad commit 577cf2cc9c0942b0ff85f12a402b3ca259cd13a2 evaluated as 'good' (metric=0.95), expected 'bad'`.
-- In Job A, `progress_count` of 2 equals the two boundary endpoint evaluations (`c0` and `c4`) performed prior to the endpoint check failing; each evaluation invokes `on_progress` which increments `progress_count` in [`model_bisect/worker.py:96`](../model_bisect/worker.py#L96) and [`model_bisect/db.py:209`](../model_bisect/db.py#L209).
+- **Evaluation Sequence & Progress Count Line References** (cites [docs/source_refs.txt](source_refs.txt)):
+  - Endpoint evaluations: `commits[0]` is evaluated at `model_bisect/engine.py:491`, and `commits[-1]` is evaluated at `model_bisect/engine.py:492`.
+  - Progress callback: When `on_progress` is configured (`model_bisect/worker.py:115`), `model_bisect/engine.py:455` checks `if on_progress is not None:` and invokes `on_progress(eval_res)` at `model_bisect/engine.py:457`. Note that grep output does not show the call order inside `evaluate()`. The callback `on_progress_callback` (`model_bisect/worker.py:94`) calls `increment_progress` at `model_bisect/worker.py:96` (defined at `model_bisect/db.py:203`).
+  - Error exit: The endpoint check triggers the error message matching `expected 'bad'` at `model_bisect/engine.py:555`. In `model_bisect/worker.py`, line 117 (`if result.status == "error":`) leads to `fail_job` at line 118.
+  - The final `progress_count` of 2 in [docs/job_a.json](job_a.json) equals the two endpoint evaluations performed before failure.
 - For the full raw response, see [docs/job_a.json](job_a.json).
 
 ### Job B: Alternating Monotonicity Check
@@ -76,7 +80,8 @@ The post-bisect check changed from "every earlier commit must be good" to "no ea
 - A fresh temporary clone was created, requirements installed into a fresh virtual environment, and the entire test suite executed.
 - Verified test results: 62 tests collected, 62 passed, exit code 0.
 - For the complete raw terminal log, see [docs/verification_output.txt](verification_output.txt).
-- For the summary lines from `verification_output.txt`, see [docs/tail_verification.txt](tail_verification.txt).
+- For the summary line from line 90 of `verification_output.txt`, see [docs/test_summary_line.txt](test_summary_line.txt).
+- For the clean clone exit block, see [docs/tail_verification.txt](tail_verification.txt).
 
 ### Pytest Collection
 ```bash
@@ -89,7 +94,7 @@ pytest --collect-only -q > docs/collect_output.txt
   - `tests/test_api.py`: 8 tests
   - `tests/test_worker.py`: 8 tests
 - For the full list of collected tests, see [docs/collect_output.txt](collect_output.txt).
-- For the summary lines from `collect_output.txt`, see [docs/tail_collect.txt](tail_collect.txt).
+- For the summary line from `collect_output.txt`, see [docs/tail_collect.txt](tail_collect.txt).
 
 ---
 

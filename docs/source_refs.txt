@@ -1,0 +1,23 @@
+model_bisect/engine.py:396:    on_progress: Callable[[CommitEvaluation], None] | None = None,
+model_bisect/engine.py:455:        if on_progress is not None:
+model_bisect/engine.py:457:                on_progress(eval_res)
+model_bisect/engine.py:478:            single_eval = evaluate(commits[0])
+model_bisect/engine.py:491:        good_eval = evaluate(commits[0])
+model_bisect/engine.py:492:        bad_eval = evaluate(commits[-1])
+model_bisect/engine.py:555:                    f"(metric={bad_eval.metric}), expected 'bad'"
+model_bisect/engine.py:570:            eval_cand = evaluate(commits[candidate])
+model_bisect/engine.py:581:                            eval_cand = evaluate(commits[candidate])
+model_bisect/engine.py:616:                evaluate(commits[low - 1])
+model_bisect/engine.py:637:            evaluate(commits[high + 1])
+model_bisect/worker.py:23:    increment_progress,
+model_bisect/worker.py:94:    def on_progress_callback(eval_res: CommitEvaluation) -> None:
+model_bisect/worker.py:96:            increment_progress(job.id, db_path=db_path)
+model_bisect/worker.py:115:            on_progress=on_progress_callback,
+model_bisect/db.py:203:def increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
+20:    fail_job,
+80:        fail_job(job.id, str(e), db_path=db_path)
+84:        fail_job(job.id, f"Configuration error: {e}", db_path=db_path)
+117:        if result.status == "error":
+118:            fail_job(job.id, result.error_message or "Bisect failed with error", db_path=db_path)
+122:            logger.info(f"Job {job.id} completed with status: {result.status}")
+125:        fail_job(job.id, f"Evaluation error: {e}", db_path=db_path)
