@@ -12,5 +12,4 @@ targets.toml
 repos/
 scratch_demo/
 model_bisect.db*
-.wheels/
 
