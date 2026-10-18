@@ -2,9 +2,27 @@
 
 This document records the end-to-end reproduction and verification of Model Bisect finding a real performance regression in a scikit-learn model repository, executed via both the CLI and REST API.
 
-All outputs in this document are cited directly from:
+All outputs in this document are cited directly from saved files:
 - CLI Output: `docs/sklearn_demo_cli.json`
 - API Output: `docs/sklearn_demo_job.json`
+- Accuracy Table: `docs/sklearn_demo_accuracy.txt`
+- Job Status Check: `docs/sklearn_demo_job_check.txt`
+- Collect Counts: `docs/collect_counts.txt`
+
+---
+
+## Quick Run
+
+Run the entire demo with a single command:
+
+```bash
+./scripts/run_sklearn_demo.sh
+```
+
+Expected last line of output:
+```
+Culprit: 6f2ce80 c6: reduce n_estimators to 2 for faster training (regression) (evaluated 6 commits)
+```
 
 ---
 
@@ -24,14 +42,16 @@ The script `scripts/make_sklearn_repo.sh` generates a git repository with 12 com
   timeout = 60.0
   repeat_count = 1
   ```
-- Commit history:
-  - `c0` to `c5`: `n_estimators=200` (Accuracy: 0.958041958041958, meets threshold $\ge 0.95$)
-  - `c6`: Planted regression changes `n_estimators=2` (Accuracy: 0.8881118881118881, drops below threshold)
-  - `c7` to `c11`: Cosmetic commits keeping `n_estimators=2` (Accuracy: 0.8881118881118881)
 
-### Generation Command
-```bash
-bash scripts/make_sklearn_repo.sh repos/sklearn_demo
+### Evaluated Accuracies from `docs/sklearn_demo_accuracy.txt`
+```
+Commit   Hash                                       Accuracy   Subject
+c0       040b2fd8aa77f6948705f2c371db922f6c96488f   0.9580     c0: initial model with n_estimators=200
+c2       4a26b105da2d44c5aad1765f45f00c85a5916974   0.9580     c2: clarify train-test split strategy
+c5       d413a168b3131e6119fe3343391c5ca6efe43677   0.9580     c5: verify hyperparameter comments before release
+c6       85f2bce386aa34eb93232b9cabf0b19b5037f98a   0.8881     c6: reduce n_estimators to 2 for faster training (regression)
+c8       fa031c02c316cef87d5fec77bd1e74b988c01223   0.8881     c8: document quick training mode
+c11      058be493831f50b9656a73b3001cecd87c60c524   0.8881     c11: final cosmetic polish and notes
 ```
 
 ---
@@ -110,40 +130,21 @@ python -m model_bisect \
 }
 ```
 
-Culprit commit commit message:
-`85f2bce c6: reduce n_estimators to 2 for faster training (regression)`
-
 ---
 
 ## Part 3: REST API Bisect Execution
 
-### Target Configuration (`targets.toml`)
-```toml
-[targets.sklearn_demo_target]
-repo_path = "/repos/sklearn_demo"
-eval_command = "python train.py"
-metric_name = "accuracy"
-threshold = 0.95
-direction = "higher"
-valid_range = [0.0, 1.0]
-timeout = 60.0
-repeat_count = 1
+### Job Status Check from `docs/sklearn_demo_job_check.txt`
 ```
-
-### Job Submission
-```bash
-curl -X POST http://127.0.0.1:8000/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target": "sklearn_demo_target",
-    "good_commit": "040b2fd8aa77f6948705f2c371db922f6c96488f",
-    "bad_commit": "058be493831f50b9656a73b3001cecd87c60c524"
-  }'
-```
-
-### Poll and Save Result
-```bash
-curl http://127.0.0.1:8000/jobs/32e81cef-3060-442f-80ca-edb38eb1dc92 > docs/sklearn_demo_job.json
+    "status": "done",
+        "status": "found",
+        "first_bad_commit": "85f2bce386aa34eb93232b9cabf0b19b5037f98a",
+                "status": "good",
+                "status": "good",
+                "status": "good",
+                "status": "bad",
+                "status": "bad",
+                "status": "bad",
 ```
 
 ### Result from `docs/sklearn_demo_job.json`
