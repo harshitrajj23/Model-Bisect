@@ -26,6 +26,12 @@ Culprit: 6f2ce80 c6: reduce n_estimators to 2 for faster training (regression) (
 
 ---
 
+## Why hashes differ between runs
+
+Each run creates new commits with new timestamps, so commit hashes change, and the culprit should be identified by its subject line (`c6: reduce n_estimators to 2 for faster training (regression)`) and its position in the history (`c6`), matching the first bad commit recorded in `docs/sklearn_demo_cli.json`.
+
+---
+
 ## Part 1: Build the Demo Repository
 
 The script `scripts/make_sklearn_repo.sh` generates a git repository with 12 commits (`c0` to `c11`) at `repos/sklearn_demo`.
