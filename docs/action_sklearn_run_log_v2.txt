@@ -1,0 +1,440 @@
+bisect	Set up job	﻿2026-10-18T18:58:25.1649784Z Current runner version: '2.337.0'
+bisect	Set up job	2026-10-18T18:58:25.1687376Z ##[group]Runner Image Provisioner
+bisect	Set up job	2026-10-18T18:58:25.1688932Z Hosted Compute Agent
+bisect	Set up job	2026-10-18T18:58:25.1690009Z Version: 20261012.601
+bisect	Set up job	2026-10-18T18:58:25.1691193Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+bisect	Set up job	2026-10-18T18:58:25.1692630Z Build Date: 2026-10-12T17:48:21Z
+bisect	Set up job	2026-10-18T18:58:25.1693874Z Worker ID: {9805d58a-f0c6-437f-a7dd-bb6dcd09b613}
+bisect	Set up job	2026-10-18T18:58:25.1695256Z Region: westus2
+bisect	Set up job	2026-10-18T18:58:25.1696240Z Cloud: Azure
+bisect	Set up job	2026-10-18T18:58:25.1697728Z ##[endgroup]
+bisect	Set up job	2026-10-18T18:58:25.1700222Z ##[group]Operating System
+bisect	Set up job	2026-10-18T18:58:25.1701333Z Ubuntu
+bisect	Set up job	2026-10-18T18:58:25.1702198Z 24.04.5
+bisect	Set up job	2026-10-18T18:58:25.1703223Z LTS
+bisect	Set up job	2026-10-18T18:58:25.1704268Z ##[endgroup]
+bisect	Set up job	2026-10-18T18:58:25.1705343Z ##[group]Runner Image
+bisect	Set up job	2026-10-18T18:58:25.1706458Z Image: ubuntu-24.04
+bisect	Set up job	2026-10-18T18:58:25.1707756Z Version: 20261012.334.1
+bisect	Set up job	2026-10-18T18:58:25.1709852Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+bisect	Set up job	2026-10-18T18:58:25.1712906Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+bisect	Set up job	2026-10-18T18:58:25.1714685Z ##[endgroup]
+bisect	Set up job	2026-10-18T18:58:25.1717279Z ##[group]GITHUB_TOKEN Permissions
+bisect	Set up job	2026-10-18T18:58:25.1720069Z Contents: read
+bisect	Set up job	2026-10-18T18:58:25.1721083Z Metadata: read
+bisect	Set up job	2026-10-18T18:58:25.1722175Z PullRequests: write
+bisect	Set up job	2026-10-18T18:58:25.1723148Z ##[endgroup]
+bisect	Set up job	2026-10-18T18:58:25.1726271Z Secret source: Actions
+bisect	Set up job	2026-10-18T18:58:25.1728301Z Cache mode: write
+bisect	Set up job	2026-10-18T18:58:25.1729624Z Prepare workflow directory
+bisect	Set up job	2026-10-18T18:58:25.2399895Z Prepare all required actions
+bisect	Set up job	2026-10-18T18:58:25.2472628Z Getting action download info
+bisect	Set up job	2026-10-18T18:58:25.6849997Z Download action repository 'actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11' (SHA:b4ffde65f46336ab88eb53be808477a3936bae11)
+bisect	Set up job	2026-10-18T18:58:25.8082867Z Download action repository 'actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c' (SHA:0a5c61591373683505ea898e09a3ea4f39ef2b9c)
+bisect	Set up job	2026-10-18T18:58:26.0260689Z Download action repository 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea' (SHA:60a0d83039c74a4aee543508d2ffcb1c3799cdea)
+bisect	Set up job	2026-10-18T18:58:26.2997400Z Complete job name: bisect
+bisect	Checkout repository	﻿2026-10-18T18:58:26.3778752Z ##[group]Run actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+bisect	Checkout repository	2026-10-18T18:58:26.3779828Z with:
+bisect	Checkout repository	2026-10-18T18:58:26.3780297Z   fetch-depth: 0
+bisect	Checkout repository	2026-10-18T18:58:26.3780782Z   repository: harshitrajj23/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.3784567Z   token: ***
+bisect	Checkout repository	2026-10-18T18:58:26.3784990Z   ssh-strict: true
+bisect	Checkout repository	2026-10-18T18:58:26.3785455Z   persist-credentials: true
+bisect	Checkout repository	2026-10-18T18:58:26.3785933Z   clean: true
+bisect	Checkout repository	2026-10-18T18:58:26.3786370Z   sparse-checkout-cone-mode: true
+bisect	Checkout repository	2026-10-18T18:58:26.3787092Z   fetch-tags: false
+bisect	Checkout repository	2026-10-18T18:58:26.3787527Z   show-progress: true
+bisect	Checkout repository	2026-10-18T18:58:26.3787970Z   lfs: false
+bisect	Checkout repository	2026-10-18T18:58:26.3788374Z   submodules: false
+bisect	Checkout repository	2026-10-18T18:58:26.3788810Z   set-safe-directory: true
+bisect	Checkout repository	2026-10-18T18:58:26.3789544Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.4644689Z (node:1966) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+bisect	Checkout repository	2026-10-18T18:58:26.4647377Z (Use `node --trace-deprecation ...` to show where the warning was created)
+bisect	Checkout repository	2026-10-18T18:58:26.4782201Z Syncing repository: harshitrajj23/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.4784867Z ##[group]Getting Git version info
+bisect	Checkout repository	2026-10-18T18:58:26.4787659Z Working directory is '/home/runner/work/Model-Bisect/Model-Bisect'
+bisect	Checkout repository	2026-10-18T18:58:26.4789438Z [command]/usr/bin/git version
+bisect	Checkout repository	2026-10-18T18:58:26.4888170Z git version 2.55.0
+bisect	Checkout repository	2026-10-18T18:58:26.4909409Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.4924260Z Temporarily overriding HOME='/home/runner/work/_temp/68c6e016-8a22-4e4b-9ad5-4339aba45108' before making global git config changes
+bisect	Checkout repository	2026-10-18T18:58:26.4927581Z Adding repository directory to the temporary git global config as a safe directory
+bisect	Checkout repository	2026-10-18T18:58:26.4930527Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Model-Bisect/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.4985380Z Deleting the contents of '/home/runner/work/Model-Bisect/Model-Bisect'
+bisect	Checkout repository	2026-10-18T18:58:26.4991165Z ##[group]Initializing the repository
+bisect	Checkout repository	2026-10-18T18:58:26.4997613Z [command]/usr/bin/git init /home/runner/work/Model-Bisect/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.5111238Z hint: Using 'master' as the name for the initial branch. This default branch name
+bisect	Checkout repository	2026-10-18T18:58:26.5113168Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+bisect	Checkout repository	2026-10-18T18:58:26.5117260Z hint: to use in all of your new repositories, which will suppress this warning,
+bisect	Checkout repository	2026-10-18T18:58:26.5127987Z hint: call:
+bisect	Checkout repository	2026-10-18T18:58:26.5129008Z hint:
+bisect	Checkout repository	2026-10-18T18:58:26.5131989Z hint: 	git config --global init.defaultBranch <name>
+bisect	Checkout repository	2026-10-18T18:58:26.5133045Z hint:
+bisect	Checkout repository	2026-10-18T18:58:26.5134000Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+bisect	Checkout repository	2026-10-18T18:58:26.5135581Z hint: 'development'. The just-created branch can be renamed via this command:
+bisect	Checkout repository	2026-10-18T18:58:26.5137173Z hint:
+bisect	Checkout repository	2026-10-18T18:58:26.5137913Z hint: 	git branch -m <name>
+bisect	Checkout repository	2026-10-18T18:58:26.5138746Z hint:
+bisect	Checkout repository	2026-10-18T18:58:26.5139834Z hint: Disable this message with "git config set advice.defaultBranchName false"
+bisect	Checkout repository	2026-10-18T18:58:26.5141764Z Initialized empty Git repository in /home/runner/work/Model-Bisect/Model-Bisect/.git/
+bisect	Checkout repository	2026-10-18T18:58:26.5144872Z [command]/usr/bin/git remote add origin https://github.com/harshitrajj23/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.5183022Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.5184893Z ##[group]Disabling automatic garbage collection
+bisect	Checkout repository	2026-10-18T18:58:26.5187280Z [command]/usr/bin/git config --local gc.auto 0
+bisect	Checkout repository	2026-10-18T18:58:26.5218557Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.5220690Z ##[group]Setting up auth
+bisect	Checkout repository	2026-10-18T18:58:26.5224367Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+bisect	Checkout repository	2026-10-18T18:58:26.5257588Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+bisect	Checkout repository	2026-10-18T18:58:26.5611870Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+bisect	Checkout repository	2026-10-18T18:58:26.5644947Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+bisect	Checkout repository	2026-10-18T18:58:26.5881707Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+bisect	Checkout repository	2026-10-18T18:58:26.5930769Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.5931965Z ##[group]Fetching the repository
+bisect	Checkout repository	2026-10-18T18:58:26.5942163Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +425dce823e22a4b2ae3052df35e469aa191838b3:refs/remotes/pull/4/merge
+bisect	Checkout repository	2026-10-18T18:58:26.9629545Z From https://github.com/harshitrajj23/Model-Bisect
+bisect	Checkout repository	2026-10-18T18:58:26.9631815Z  * [new branch]      main                                     -> origin/main
+bisect	Checkout repository	2026-10-18T18:58:26.9639862Z  * [new branch]      test/action-smoke                        -> origin/test/action-smoke
+bisect	Checkout repository	2026-10-18T18:58:26.9641881Z  * [new branch]      test/sklearn-action                      -> origin/test/sklearn-action
+bisect	Checkout repository	2026-10-18T18:58:26.9643582Z  * [new tag]         v0.1                                     -> v0.1
+bisect	Checkout repository	2026-10-18T18:58:26.9645056Z  * [new ref]         425dce823e22a4b2ae3052df35e469aa191838b3 -> pull/4/merge
+bisect	Checkout repository	2026-10-18T18:58:26.9648939Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.9650326Z ##[group]Determining the checkout info
+bisect	Checkout repository	2026-10-18T18:58:26.9651863Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.9653246Z ##[group]Checking out the ref
+bisect	Checkout repository	2026-10-18T18:58:26.9654657Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/4/merge
+bisect	Checkout repository	2026-10-18T18:58:26.9761072Z Note: switching to 'refs/remotes/pull/4/merge'.
+bisect	Checkout repository	2026-10-18T18:58:26.9761626Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9762076Z You are in 'detached HEAD' state. You can look around, make experimental
+bisect	Checkout repository	2026-10-18T18:58:26.9764501Z changes and commit them, and you can discard any commits you make in this
+bisect	Checkout repository	2026-10-18T18:58:26.9766385Z state without impacting any branches by switching back to a branch.
+bisect	Checkout repository	2026-10-18T18:58:26.9767727Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9768734Z If you want to create a new branch to retain commits you create, you may
+bisect	Checkout repository	2026-10-18T18:58:26.9770060Z do so (now or later) by using -c with the switch command. Example:
+bisect	Checkout repository	2026-10-18T18:58:26.9770878Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9783054Z   git switch -c <new-branch-name>
+bisect	Checkout repository	2026-10-18T18:58:26.9784108Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9784741Z Or undo this operation with:
+bisect	Checkout repository	2026-10-18T18:58:26.9785511Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9786013Z   git switch -
+bisect	Checkout repository	2026-10-18T18:58:26.9786923Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9787878Z Turn off this advice by setting config variable advice.detachedHead to false
+bisect	Checkout repository	2026-10-18T18:58:26.9791755Z 
+bisect	Checkout repository	2026-10-18T18:58:26.9793427Z HEAD is now at 425dce8 Merge 34b9b0231292e5b53ac69860f333f42d974dd682 into c4e4db51e89264ec9dc6b81081d098f011a8c8e5
+bisect	Checkout repository	2026-10-18T18:58:26.9798522Z ##[endgroup]
+bisect	Checkout repository	2026-10-18T18:58:26.9817434Z [command]/usr/bin/git log -1 --format='%H'
+bisect	Checkout repository	2026-10-18T18:58:26.9842206Z '425dce823e22a4b2ae3052df35e469aa191838b3'
+bisect	Set up Python	﻿2026-10-18T18:58:27.0197364Z ##[group]Run actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
+bisect	Set up Python	2026-10-18T18:58:27.0198293Z with:
+bisect	Set up Python	2026-10-18T18:58:27.0198750Z   python-version: 3.12
+bisect	Set up Python	2026-10-18T18:58:27.0199270Z   cache: pip
+bisect	Set up Python	2026-10-18T18:58:27.0199733Z   check-latest: false
+bisect	Set up Python	2026-10-18T18:58:27.0203656Z   token: ***
+bisect	Set up Python	2026-10-18T18:58:27.0204155Z   update-environment: true
+bisect	Set up Python	2026-10-18T18:58:27.0204703Z   allow-prereleases: false
+bisect	Set up Python	2026-10-18T18:58:27.0205226Z ##[endgroup]
+bisect	Set up Python	2026-10-18T18:58:27.1680475Z ##[group]Installed versions
+bisect	Set up Python	2026-10-18T18:58:27.1688102Z (node:2052) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+bisect	Set up Python	2026-10-18T18:58:27.1704393Z Successfully set up CPython (3.12.15)
+bisect	Set up Python	2026-10-18T18:58:27.1706227Z ##[endgroup]
+bisect	Set up Python	2026-10-18T18:58:27.1708831Z (Use `node --trace-deprecation ...` to show where the warning was created)
+bisect	Set up Python	2026-10-18T18:58:27.3551933Z [command]/opt/hostedtoolcache/Python/3.12.15/x64/bin/pip cache dir
+bisect	Set up Python	2026-10-18T18:58:27.6448920Z /home/runner/.cache/pip
+bisect	Set up Python	2026-10-18T18:58:27.7226415Z ##[warning]Failed to restore: Cache service responded with 400
+bisect	Set up Python	2026-10-18T18:58:27.7248395Z pip cache is not found
+bisect	Install dependencies	﻿2026-10-18T18:58:27.7461716Z ##[group]Run python -m pip install --upgrade pip
+bisect	Install dependencies	2026-10-18T18:58:27.7463450Z ^[[36;1mpython -m pip install --upgrade pip^[[0m
+bisect	Install dependencies	2026-10-18T18:58:27.7465005Z ^[[36;1mpip install -r requirements.txt^[[0m
+bisect	Install dependencies	2026-10-18T18:58:27.7742980Z shell: /usr/bin/bash -e {0}
+bisect	Install dependencies	2026-10-18T18:58:27.7744834Z env:
+bisect	Install dependencies	2026-10-18T18:58:27.7747093Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Install dependencies	2026-10-18T18:58:27.7750447Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+bisect	Install dependencies	2026-10-18T18:58:27.7753716Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Install dependencies	2026-10-18T18:58:27.7772819Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Install dependencies	2026-10-18T18:58:27.7774872Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Install dependencies	2026-10-18T18:58:27.7777211Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+bisect	Install dependencies	2026-10-18T18:58:27.7779126Z ##[endgroup]
+bisect	Install dependencies	2026-10-18T18:58:28.3755075Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages (26.2.1)
+bisect	Install dependencies	2026-10-18T18:58:29.0746473Z Collecting annotated-doc==0.0.5 (from -r requirements.txt (line 1))
+bisect	Install dependencies	2026-10-18T18:58:29.1737642Z   Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.1946067Z Collecting annotated-types==0.8.0 (from -r requirements.txt (line 2))
+bisect	Install dependencies	2026-10-18T18:58:29.2014059Z   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.2437408Z Collecting anyio==4.15.1 (from -r requirements.txt (line 3))
+bisect	Install dependencies	2026-10-18T18:58:29.2542362Z   Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.2892101Z Collecting certifi==2026.7.22 (from -r requirements.txt (line 4))
+bisect	Install dependencies	2026-10-18T18:58:29.2964725Z   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.3175389Z Collecting click==8.5.0 (from -r requirements.txt (line 5))
+bisect	Install dependencies	2026-10-18T18:58:29.3249380Z   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.3763396Z Collecting fastapi==0.143.3 (from -r requirements.txt (line 6))
+bisect	Install dependencies	2026-10-18T18:58:29.3834444Z   Downloading fastapi-0.143.3-py3-none-any.whl.metadata (26 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.4107603Z Collecting h11==0.16.0 (from -r requirements.txt (line 7))
+bisect	Install dependencies	2026-10-18T18:58:29.4178093Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.4374496Z Collecting httpcore==1.0.9 (from -r requirements.txt (line 8))
+bisect	Install dependencies	2026-10-18T18:58:29.4431878Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.4686812Z Collecting httpx==0.28.1 (from -r requirements.txt (line 9))
+bisect	Install dependencies	2026-10-18T18:58:29.4760671Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.5043276Z Collecting idna==3.20 (from -r requirements.txt (line 10))
+bisect	Install dependencies	2026-10-18T18:58:29.5131118Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.5267677Z Collecting iniconfig==2.3.1 (from -r requirements.txt (line 11))
+bisect	Install dependencies	2026-10-18T18:58:29.5334283Z   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.5539818Z Collecting opentelemetry-api==1.45.1 (from -r requirements.txt (line 12))
+bisect	Install dependencies	2026-10-18T18:58:29.5630599Z   Downloading opentelemetry_api-1.45.1-py3-none-any.whl.metadata (1.4 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.5822016Z Collecting packaging==26.3 (from -r requirements.txt (line 13))
+bisect	Install dependencies	2026-10-18T18:58:29.5895598Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.6049250Z Collecting pluggy==1.7.0 (from -r requirements.txt (line 14))
+bisect	Install dependencies	2026-10-18T18:58:29.6124408Z   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+bisect	Install dependencies	2026-10-18T18:58:29.7792264Z Collecting pydantic==2.14.1 (from -r requirements.txt (line 15))
+bisect	Install dependencies	2026-10-18T18:58:29.7841987Z   Downloading pydantic-2.14.1-py3-none-any.whl.metadata (133 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.5602175Z Collecting pydantic_core==2.50.1 (from -r requirements.txt (line 16))
+bisect	Install dependencies	2026-10-18T18:58:30.5675337Z   Downloading pydantic_core-2.50.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.5879990Z Collecting Pygments==2.21.0 (from -r requirements.txt (line 17))
+bisect	Install dependencies	2026-10-18T18:58:30.5963023Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.6257207Z Collecting pytest==9.1.1 (from -r requirements.txt (line 18))
+bisect	Install dependencies	2026-10-18T18:58:30.6326335Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.6622434Z Collecting starlette==1.8.0 (from -r requirements.txt (line 19))
+bisect	Install dependencies	2026-10-18T18:58:30.6697970Z   Downloading starlette-1.8.0-py3-none-any.whl.metadata (6.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.6891517Z Collecting typing_extensions==4.16.0 (from -r requirements.txt (line 20))
+bisect	Install dependencies	2026-10-18T18:58:30.6971462Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.7142956Z Collecting typing-inspection==0.4.4 (from -r requirements.txt (line 21))
+bisect	Install dependencies	2026-10-18T18:58:30.7220278Z   Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.7515533Z Collecting uvicorn==0.54.0 (from -r requirements.txt (line 22))
+bisect	Install dependencies	2026-10-18T18:58:30.7600666Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:30.8473960Z Collecting scikit-learn>=1.4.0 (from -r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:30.8551843Z   Downloading scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.3 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.0734609Z Collecting numpy>=1.24.1 (from scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.0828284Z   Downloading numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.2092884Z Collecting scipy>=1.10.0 (from scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.2176507Z   Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.2577335Z Collecting joblib>=1.4.0 (from scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.2639155Z   Downloading joblib-1.6.0-py3-none-any.whl.metadata (6.5 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.3190839Z Collecting narwhals>=2.0.1 (from scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.3268569Z   Downloading narwhals-2.27.1-py3-none-any.whl.metadata (15 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.3444161Z Collecting threadpoolctl>=3.5.0 (from scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.3517379Z   Downloading threadpoolctl-3.7.0-py3-none-any.whl.metadata (24 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.3785269Z Collecting cloudpickle>=3.0 (from joblib>=1.4.0->scikit-learn>=1.4.0->-r requirements.txt (line 23))
+bisect	Install dependencies	2026-10-18T18:58:31.3865986Z   Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4015295Z Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4108328Z Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4203489Z Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4449763Z Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4682105Z Downloading click-8.5.0-py3-none-any.whl (125 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.4863463Z Downloading fastapi-0.143.3-py3-none-any.whl (144 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5034200Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5127166Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5265924Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5379863Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5497234Z Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5583800Z Downloading opentelemetry_api-1.45.1-py3-none-any.whl (60 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5701159Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5855125Z Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.5955214Z Downloading pydantic-2.14.1-py3-none-any.whl (488 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.6283221Z Downloading pydantic_core-2.50.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+bisect	Install dependencies	2026-10-18T18:58:31.7019018Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 31.3 MB/s  0:00:00
+bisect	Install dependencies	2026-10-18T18:58:31.7096015Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+bisect	Install dependencies	2026-10-18T18:58:31.7394376Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 43.3 MB/s  0:00:00
+bisect	Install dependencies	2026-10-18T18:58:31.7462253Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.7613992Z Downloading starlette-1.8.0-py3-none-any.whl (79 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.7707044Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.7797427Z Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.7885493Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.8010040Z Downloading scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (9.2 MB)
+bisect	Install dependencies	2026-10-18T18:58:31.9084719Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.2/9.2 MB 86.9 MB/s  0:00:00
+bisect	Install dependencies	2026-10-18T18:58:31.9161351Z Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.9264614Z Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.9363054Z Downloading narwhals-2.27.1-py3-none-any.whl (483 kB)
+bisect	Install dependencies	2026-10-18T18:58:31.9496823Z Downloading numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+bisect	Install dependencies	2026-10-18T18:58:32.0470216Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 174.6 MB/s  0:00:00
+bisect	Install dependencies	2026-10-18T18:58:32.0543727Z Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+bisect	Install dependencies	2026-10-18T18:58:32.1845834Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 276.4 MB/s  0:00:00
+bisect	Install dependencies	2026-10-18T18:58:32.1920110Z Downloading threadpoolctl-3.7.0-py3-none-any.whl (26 kB)
+bisect	Install dependencies	2026-10-18T18:58:32.4299397Z Installing collected packages: typing_extensions, threadpoolctl, Pygments, pluggy, packaging, numpy, narwhals, iniconfig, idna, h11, cloudpickle, click, certifi, annotated-types, annotated-doc, uvicorn, typing-inspection, scipy, pytest, pydantic_core, opentelemetry-api, joblib, httpcore, anyio, starlette, scikit-learn, pydantic, httpx, fastapi
+bisect	Install dependencies	2026-10-18T18:58:44.9668537Z 
+bisect	Install dependencies	2026-10-18T18:58:44.9702257Z Successfully installed Pygments-2.21.0 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 certifi-2026.7.22 click-8.5.0 cloudpickle-3.1.2 fastapi-0.143.3 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.20 iniconfig-2.3.1 joblib-1.6.0 narwhals-2.27.1 numpy-2.5.4 opentelemetry-api-1.45.1 packaging-26.3 pluggy-1.7.0 pydantic-2.14.1 pydantic_core-2.50.1 pytest-9.1.1 scikit-learn-1.9.1 scipy-1.18.1 starlette-1.8.0 threadpoolctl-3.7.0 typing-inspection-0.4.4 typing_extensions-4.16.0 uvicorn-0.54.0
+bisect	Run Model Bisect	﻿2026-10-18T18:58:45.0841426Z ##[group]Run set +e
+bisect	Run Model Bisect	2026-10-18T18:58:45.0841746Z ^[[36;1mset +e^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0841971Z ^[[36;1mpython -m model_bisect \^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0842238Z ^[[36;1m  --repo . \^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0842552Z ^[[36;1m  --good "c4e4db51e89264ec9dc6b81081d098f011a8c8e5" \^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0842970Z ^[[36;1m  --bad "34b9b0231292e5b53ac69860f333f42d974dd682" \^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0843321Z ^[[36;1m  --config .model-bisect.toml \^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0843607Z ^[[36;1m  --out result.json^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0843845Z ^[[36;1mexit_code=$?^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0844121Z ^[[36;1mecho "exit_code=$exit_code" >> "$GITHUB_OUTPUT"^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0844448Z ^[[36;1mset -e^[[0m
+bisect	Run Model Bisect	2026-10-18T18:58:45.0910741Z shell: /usr/bin/bash -e {0}
+bisect	Run Model Bisect	2026-10-18T18:58:45.0911009Z env:
+bisect	Run Model Bisect	2026-10-18T18:58:45.0911287Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Run Model Bisect	2026-10-18T18:58:45.0911750Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+bisect	Run Model Bisect	2026-10-18T18:58:45.0912215Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Run Model Bisect	2026-10-18T18:58:45.0912658Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Run Model Bisect	2026-10-18T18:58:45.0913055Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Run Model Bisect	2026-10-18T18:58:45.0913452Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+bisect	Run Model Bisect	2026-10-18T18:58:45.0913784Z ##[endgroup]
+bisect	Run Model Bisect	2026-10-18T18:58:52.5107613Z {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5108304Z   "status": "found",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5110607Z   "first_bad_commit": "fd1a542d1b3f060e1ae0172be3a1b3dc8632e257",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5111181Z   "evaluated_commits": [
+bisect	Run Model Bisect	2026-10-18T18:58:52.5111511Z     {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5111873Z       "commit": "c4e4db51e89264ec9dc6b81081d098f011a8c8e5",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5112361Z       "metric": 0.958041958041958,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5112730Z       "status": "good",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5113060Z       "duration": 1.8729158330000004,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5113445Z       "skip_reason": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5113786Z       "eval_runs": null
+bisect	Run Model Bisect	2026-10-18T18:58:52.5114090Z     },
+bisect	Run Model Bisect	2026-10-18T18:58:52.5114393Z     {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5114744Z       "commit": "7df6f7665d4961ce183c1dda3937468cbd3147a8",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5115226Z       "metric": 0.958041958041958,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5115595Z       "status": "good",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5115941Z       "duration": 1.4826484039999954,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5116339Z       "skip_reason": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5117885Z       "eval_runs": null
+bisect	Run Model Bisect	2026-10-18T18:58:52.5118217Z     },
+bisect	Run Model Bisect	2026-10-18T18:58:52.5118478Z     {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5118839Z       "commit": "5dc038fe4979503874f0e6ef5f1ad2a079ea800f",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5119318Z       "metric": 0.958041958041958,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5119690Z       "status": "good",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5120029Z       "duration": 1.4820650599999965,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5120418Z       "skip_reason": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5120751Z       "eval_runs": null
+bisect	Run Model Bisect	2026-10-18T18:58:52.5121070Z     },
+bisect	Run Model Bisect	2026-10-18T18:58:52.5121322Z     {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5121667Z       "commit": "fd1a542d1b3f060e1ae0172be3a1b3dc8632e257",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5122431Z       "metric": 0.8881118881118881,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5122816Z       "status": "bad",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5123143Z       "duration": 1.172621600999996,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5123525Z       "skip_reason": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5123867Z       "eval_runs": null
+bisect	Run Model Bisect	2026-10-18T18:58:52.5124174Z     },
+bisect	Run Model Bisect	2026-10-18T18:58:52.5124429Z     {
+bisect	Run Model Bisect	2026-10-18T18:58:52.5124755Z       "commit": "34b9b0231292e5b53ac69860f333f42d974dd682",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5125226Z       "metric": 0.8881118881118881,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5125589Z       "status": "bad",
+bisect	Run Model Bisect	2026-10-18T18:58:52.5125906Z       "duration": 1.1667797899999997,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5126280Z       "skip_reason": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5126943Z       "eval_runs": null
+bisect	Run Model Bisect	2026-10-18T18:58:52.5127263Z     }
+bisect	Run Model Bisect	2026-10-18T18:58:52.5127516Z   ],
+bisect	Run Model Bisect	2026-10-18T18:58:52.5127783Z   "total_eval_count": 5,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5128127Z   "error_message": null,
+bisect	Run Model Bisect	2026-10-18T18:58:52.5128489Z   "monotonicity_verified": true
+bisect	Run Model Bisect	2026-10-18T18:58:52.5129105Z }
+bisect	Post PR Comment	﻿2026-10-18T18:58:52.5405222Z ##[group]Run actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+bisect	Post PR Comment	2026-10-18T18:58:52.5405679Z with:
+bisect	Post PR Comment	2026-10-18T18:58:52.5408543Z   github-token: ***
+bisect	Post PR Comment	2026-10-18T18:58:52.5413858Z   script: const fs = require('fs');
+bisect	Post PR Comment	let result = null;
+bisect	Post PR Comment	try {
+bisect	Post PR Comment	  const raw = fs.readFileSync('result.json', 'utf8');
+bisect	Post PR Comment	  result = JSON.parse(raw);
+bisect	Post PR Comment	} catch (err) {
+bisect	Post PR Comment	  console.log('Could not read result.json:', err);
+bisect	Post PR Comment	}
+bisect	Post PR Comment	
+bisect	Post PR Comment	const repoUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+bisect	Post PR Comment	let commentBody = '### 🔍 Model Bisect Verdict\n\n';
+bisect	Post PR Comment	
+bisect	Post PR Comment	if (!result) {
+bisect	Post PR Comment	  commentBody += '⚠️ **Error:** Model Bisect failed to produce a valid `result.json` output.\n';
+bisect	Post PR Comment	} else if (result.status === 'found') {
+bisect	Post PR Comment	  const commitSha = result.first_bad_commit;
+bisect	Post PR Comment	  const shortSha = commitSha ? commitSha.substring(0, 7) : 'Unknown';
+bisect	Post PR Comment	  const commitLink = `[${shortSha}](${repoUrl}/commit/${commitSha})`;
+bisect	Post PR Comment	
+bisect	Post PR Comment	  commentBody += `✅ **Culprit Commit Identified:** ${commitLink}\n\n`;
+bisect	Post PR Comment	  commentBody += `| Metric | Value |\n|---|---|\n`;
+bisect	Post PR Comment	  commentBody += `| **Status** | \`${result.status}\` |\n`;
+bisect	Post PR Comment	  commentBody += `| **Evaluations Performed** | \`${result.total_eval_count}\` |\n`;
+bisect	Post PR Comment	  commentBody += `| **Monotonicity Verified** | \`${result.monotonicity_verified}\` |\n\n`;
+bisect	Post PR Comment	  if (!result.monotonicity_verified) {
+bisect	Post PR Comment	    commentBody += '> *Note:* Monotonicity verification was skipped because binary search utilized the full evaluation budget.\n';
+bisect	Post PR Comment	  }
+bisect	Post PR Comment	} else {
+bisect	Post PR Comment	  commentBody += `ℹ️ **Status:** \`${result.status}\`\n\n`;
+bisect	Post PR Comment	  if (result.error_message) {
+bisect	Post PR Comment	    commentBody += `**Reason:** ${result.error_message}\n\n`;
+bisect	Post PR Comment	  }
+bisect	Post PR Comment	  commentBody += `Total evaluations evaluated: ${result.total_eval_count}\n`;
+bisect	Post PR Comment	}
+bisect	Post PR Comment	
+bisect	Post PR Comment	commentBody += `\n*Automated report generated by Model Bisect.*`;
+bisect	Post PR Comment	
+bisect	Post PR Comment	await github.rest.issues.createComment({
+bisect	Post PR Comment	  owner: context.repo.owner,
+bisect	Post PR Comment	  repo: context.repo.repo,
+bisect	Post PR Comment	  issue_number: context.issue.number,
+bisect	Post PR Comment	  body: commentBody
+bisect	Post PR Comment	});
+bisect	Post PR Comment	
+bisect	Post PR Comment	2026-10-18T18:58:52.5419670Z   debug: false
+bisect	Post PR Comment	2026-10-18T18:58:52.5419892Z   user-agent: actions/github-script
+bisect	Post PR Comment	2026-10-18T18:58:52.5420157Z   result-encoding: json
+bisect	Post PR Comment	2026-10-18T18:58:52.5420382Z   retries: 0
+bisect	Post PR Comment	2026-10-18T18:58:52.5420617Z   retry-exempt-status-codes: 400,401,403,404,422
+bisect	Post PR Comment	2026-10-18T18:58:52.5420907Z env:
+bisect	Post PR Comment	2026-10-18T18:58:52.5421167Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Post PR Comment	2026-10-18T18:58:52.5421598Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+bisect	Post PR Comment	2026-10-18T18:58:52.5422033Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Post PR Comment	2026-10-18T18:58:52.5422420Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Post PR Comment	2026-10-18T18:58:52.5422800Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Post PR Comment	2026-10-18T18:58:52.5423189Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+bisect	Post PR Comment	2026-10-18T18:58:52.5423540Z ##[endgroup]
+bisect	Enforce PR Status	﻿2026-10-18T18:58:53.3648536Z ##[group]Run python3 -c "
+bisect	Enforce PR Status	2026-10-18T18:58:53.3649044Z ^[[36;1mpython3 -c "^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3649441Z ^[[36;1mimport json, sys, tomllib^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3649906Z ^[[36;1mfrom pathlib import Path^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3650348Z ^[[36;1m^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3650976Z ^[[36;1mcfg_path = Path('.model-bisect.toml')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3651511Z ^[[36;1mfail_on_not_found = False^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3651965Z ^[[36;1mif cfg_path.is_file():^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3652442Z ^[[36;1m    with cfg_path.open('rb') as f:^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3652999Z ^[[36;1m        cfg = tomllib.load(f)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3653658Z ^[[36;1m        fail_on_not_found = cfg.get('fail_on_not_found', False)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3654247Z ^[[36;1m^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3654589Z ^[[36;1mres_path = Path('result.json')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3654943Z ^[[36;1mif not res_path.is_file():^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3655249Z ^[[36;1m    print('Error: result.json missing')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3655543Z ^[[36;1m    sys.exit(1)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3655799Z ^[[36;1m^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3655991Z ^[[36;1mwith res_path.open() as f:^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3656246Z ^[[36;1m    data = json.load(f)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3656474Z ^[[36;1m^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3657119Z ^[[36;1mstatus = data.get('status')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3657601Z ^[[36;1mif status == 'error':^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3658077Z ^[[36;1m    print('Bisect ended in error state')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3658594Z ^[[36;1m    sys.exit(1)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3659041Z ^[[36;1mif status != 'found' and fail_on_not_found:^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3659671Z ^[[36;1m    print(f'Bisect returned status {status}; fail_on_not_found is set to true')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3660104Z ^[[36;1m    sys.exit(1)^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3660321Z ^[[36;1m^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3660606Z ^[[36;1mprint(f'Bisect completed with acceptable status: {status}')^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3660962Z ^[[36;1m"^[[0m
+bisect	Enforce PR Status	2026-10-18T18:58:53.3724234Z shell: /usr/bin/bash -e {0}
+bisect	Enforce PR Status	2026-10-18T18:58:53.3724490Z env:
+bisect	Enforce PR Status	2026-10-18T18:58:53.3724771Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Enforce PR Status	2026-10-18T18:58:53.3725228Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+bisect	Enforce PR Status	2026-10-18T18:58:53.3725676Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Enforce PR Status	2026-10-18T18:58:53.3726066Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Enforce PR Status	2026-10-18T18:58:53.3726710Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+bisect	Enforce PR Status	2026-10-18T18:58:53.3727188Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+bisect	Enforce PR Status	2026-10-18T18:58:53.3727517Z ##[endgroup]
+bisect	Enforce PR Status	2026-10-18T18:58:53.4117870Z Bisect completed with acceptable status: found
+bisect	Post Set up Python	﻿2026-10-18T18:58:53.4243903Z Post job cleanup.
+bisect	Post Set up Python	2026-10-18T18:58:53.5483275Z (node:2194) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+bisect	Post Set up Python	2026-10-18T18:58:53.5485704Z (Use `node --trace-deprecation ...` to show where the warning was created)
+bisect	Post Set up Python	2026-10-18T18:58:53.5761611Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/Model-Bisect/Model-Bisect --files-from manifest.txt --use-compress-program zstdmt
+bisect	Post Set up Python	2026-10-18T18:58:53.9316349Z ##[warning]Failed to save: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>07RbVagAAAAD9Ha+el6rNRawmEixeNY2+Q08xRURHRTI5MjAARWRnZQ==
+bisect	Post Checkout repository	﻿2026-10-18T18:58:53.9514626Z Post job cleanup.
+bisect	Post Checkout repository	2026-10-18T18:58:54.0248519Z (node:2214) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+bisect	Post Checkout repository	2026-10-18T18:58:54.0250231Z (Use `node --trace-deprecation ...` to show where the warning was created)
+bisect	Post Checkout repository	2026-10-18T18:58:54.0283463Z [command]/usr/bin/git version
+bisect	Post Checkout repository	2026-10-18T18:58:54.0326353Z git version 2.55.0
+bisect	Post Checkout repository	2026-10-18T18:58:54.0370465Z Temporarily overriding HOME='/home/runner/work/_temp/e67478a6-6836-4072-b6cc-034f5c64b825' before making global git config changes
+bisect	Post Checkout repository	2026-10-18T18:58:54.0372198Z Adding repository directory to the temporary git global config as a safe directory
+bisect	Post Checkout repository	2026-10-18T18:58:54.0374465Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Model-Bisect/Model-Bisect
+bisect	Post Checkout repository	2026-10-18T18:58:54.0420263Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+bisect	Post Checkout repository	2026-10-18T18:58:54.0450245Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+bisect	Post Checkout repository	2026-10-18T18:58:54.0701174Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+bisect	Post Checkout repository	2026-10-18T18:58:54.0728646Z http.https://github.com/.extraheader
+bisect	Post Checkout repository	2026-10-18T18:58:54.0745451Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+bisect	Post Checkout repository	2026-10-18T18:58:54.0780512Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+bisect	Complete job	﻿2026-10-18T18:58:54.1144055Z Cleaning up orphan processes
+bisect	Complete job	2026-10-18T18:58:54.1420760Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11, actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea, actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
