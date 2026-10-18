@@ -204,6 +204,12 @@ Command: `pytest <file> --collect-only -q`
 
 ---
 
+## Invariant policy change (d6b3640)
+
+The post-bisect check changed from "every earlier commit must be good" to "no earlier commit may be bad". Skipped commits are permitted before the culprit; this is a policy decision, not a bug fix.
+
+---
+
 ## 4. Items Not Run
 
 The following items were not executed:

@@ -399,11 +399,13 @@ def bisect(
 
     Uses binary search over the commit history, classifying commits by metric threshold.
 
-    Invariant Policy:
-    When status is "found", the culprit is evaluated as "bad", and no commit evaluated
-    earlier in search order is "bad". Commits marked "skipped" before the culprit are
-    allowed, because a skipped commit gives no evidence either way. Commits marked
-    "good" are expected.
+    Invariant Policy (d6b3640):
+    The post-bisect check changed from "every earlier commit must be good" to
+    "no earlier commit may be bad". Skipped commits are permitted before the
+    culprit; this is a policy decision, not a bug fix. When status is "found",
+    the culprit is evaluated as "bad", and no commit evaluated earlier in search
+    order may be "bad". Commits marked "good" or "skipped" before the culprit
+    are allowed.
 
     Note on Monotonicity:
     Non-monotonic detection is best-effort within the evaluation budget ceil(log2(N)) + 2.
