@@ -8,11 +8,13 @@ services:
       - MODEL_BISECT_DB_PATH=/data/model_bisect.db
       - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
       - MODEL_BISECT_REPO_ROOT=/repos
-      - GIT_CONFIG_COUNT=2
+      - GIT_CONFIG_COUNT=3
       - GIT_CONFIG_KEY_0=safe.directory
       - GIT_CONFIG_VALUE_0=/repos/demo_repo
       - GIT_CONFIG_KEY_1=safe.directory
       - GIT_CONFIG_VALUE_1=/repos/alternating_repo
+      - GIT_CONFIG_KEY_2=safe.directory
+      - GIT_CONFIG_VALUE_2=/repos/sklearn_demo
     volumes:
       - db-data:/data
       - ./targets.toml:/app/targets.toml:ro
@@ -28,11 +30,13 @@ services:
       - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
       - MODEL_BISECT_REPO_ROOT=/repos
       - MODEL_BISECT_POLL_INTERVAL=1.0
-      - GIT_CONFIG_COUNT=2
+      - GIT_CONFIG_COUNT=3
       - GIT_CONFIG_KEY_0=safe.directory
       - GIT_CONFIG_VALUE_0=/repos/demo_repo
       - GIT_CONFIG_KEY_1=safe.directory
       - GIT_CONFIG_VALUE_1=/repos/alternating_repo
+      - GIT_CONFIG_KEY_2=safe.directory
+      - GIT_CONFIG_VALUE_2=/repos/sklearn_demo
     volumes:
       - db-data:/data
       - ./targets.toml:/app/targets.toml:ro
