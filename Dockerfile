@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git ca-certificates && \
+    apt-get install -y --no-install-recommends git ca-certificates procps && \
     git config --system --add safe.directory /repos/demo_repo && \
     rm -rf /var/lib/apt/lists/*
 
@@ -17,8 +17,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy Model Bisect source package
+# Copy Model Bisect source package and UI
 COPY model_bisect /app/model_bisect
+COPY ui /app/ui
 
 # Environment configuration
 ENV PYTHONUNBUFFERED=1 \

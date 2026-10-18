@@ -17,6 +17,7 @@ services:
       - db-data:/data
       - ./targets.toml:/app/targets.toml:ro
       - ./repos:/repos
+      - ./ui:/app/ui:ro
     restart: unless-stopped
 
   worker:

@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from model_bisect.config import (
     RepoPathNotAllowedError,
@@ -37,6 +39,11 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+UI_DIR = Path(__file__).resolve().parent.parent / "ui"
+if not UI_DIR.exists():
+    UI_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/ui", StaticFiles(directory=str(UI_DIR), html=True), name="ui")
 
 
 @app.exception_handler(RequestValidationError)

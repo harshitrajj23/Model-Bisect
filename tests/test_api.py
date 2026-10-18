@@ -232,3 +232,12 @@ def test_list_jobs_and_filter(api_env):
     resp_done = client.get("/jobs?status=done")
     assert resp_done.status_code == 200
     assert len(resp_done.json()) == 0
+
+
+def test_ui_route_returns_200_and_html(api_env):
+    client, _ = api_env
+    resp = client.get("/ui")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers.get("content-type", "")
+    assert "<!DOCTYPE html>" in resp.text
+
