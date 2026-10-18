@@ -1,3 +1,4 @@
+# Untested: not yet run on a real pull request.
 name: Model Regression Bisect
 
 on:

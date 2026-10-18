@@ -4,6 +4,31 @@ Model Bisect is a high-performance tool that identifies the exact Git commit tha
 
 ---
 
+## Status
+
+Model Bisect is a v0.1 prototype.
+
+### Verified
+- **Endpoint validation**: Validates endpoints and rejects a bad commit that evaluates as good before running binary search (`docs/job_a.json`).
+- **Non-monotonic history handling**: Detects non-monotonic commit histories, returning status `non_monotonic`, `first_bad_commit=null`, and `monotonicity_verified=false` (`docs/job_b.json`).
+- **Commit position ordering**: Evaluated commits in `result.evaluated_commits` are returned in ascending commit list index order (`docs/job_b.json`).
+- **Clean clone test suite**: Full suite passes from a clean clone in a fresh virtual environment (62 collected, 62 passed, exit code 0, `docs/verification_output.txt`).
+- **Docker Compose stack**: API and worker services run in Docker Compose on a single macOS host, and API responds to health checks (`docs/compose_ps.txt`, `docs/health.json`).
+
+### Not run
+- **GitHub Action live PR trigger**: Not run against a live GitHub pull request event; requires a live GitHub repository with pull request event dispatch and `GITHUB_TOKEN`.
+- **GPU evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
+- **Multi-host deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
+
+### Known limitations
+- **Predecessor check is best-effort**: To strictly respect the compute ceiling $\lceil \log_2(N) \rceil + 2$, non-monotonic detection runs only when binary search finishes with spare budget. If the budget is exhausted, non-monotonicity might not be verified (`monotonicity_verified=false`).
+- **Stdout fallback is best-effort**: Stdout output is treated as unstructured process logs. The engine parses lines matching `name=value`, but duplicate differing values cause a commit to be marked `skipped`. Reliable evaluations should write to the path in `MODEL_BISECT_METRICS_FILE`.
+- **Topological linearization**: Histories with merge commits are linearized topologically using `git rev-list --topo-order --reverse`.
+- **Resource isolation**: `git worktree` isolates file trees across commits, but subprocesses share operating system, GPU, and network resources unless wrapped in a container.
+- **Container paths in targets**: When using Docker Compose, `targets.toml` paths refer to paths inside the container (e.g., `/repos/...`).
+
+---
+
 ## Architecture Overview
 
 Model Bisect consists of:
@@ -250,26 +275,5 @@ Model Bisect provides a self-contained GitHub Action for automated CI regression
    - Generates `result.json`.
    - Posts a summary comment on the pull request with the culprit commit, evaluation count, and monotonicity status using `GITHUB_TOKEN`.
 
----
 
-## Status and Limitations
-
-As documented in [`docs/verification.md`](docs/verification.md):
-
-1. **Items Not Run**:
-   - **GitHub Action live PR trigger**: Not run against a live pull request event; requires a live GitHub repository with pull request event dispatch and `GITHUB_TOKEN`.
-   - **GPU evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
-   - **Multi-host deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
-3. **Worktree Hygiene & Scoped Git Security**:
-   - The worktree-prune and safe.directory settings are scoped as described in the [Security Model](#security-model) section.
-4. **Predecessor Check is Best-Effort**:
-   - To strictly respect the compute ceiling $\lceil \log_2(N) \rceil + 2$, non-monotonic detection runs only when binary search finishes with spare budget. An early regression that recovers can be missed if the binary search utilizes the full budget quota. In this scenario, Model Bisect returns `status="found"` with `monotonicity_verified=false` to document that monotonicity was not verified.
-5. **Stdout Fallback is a Convenience, Not a Contract**:
-   - Stdout output is treated as unstructured process logs. The engine provides a fallback parser for lines matching `name=value`, but if duplicate differing values appear, the commit is marked `skipped` as ambiguous. Reliable evaluations should write to the path in `MODEL_BISECT_METRICS_FILE`.
-6. **Octopus Merges & Complex Topologies**:
-   - Commit history between `good_commit` and `bad_commit` is linearized topologically using `git rev-list --topo-order --reverse`. For octopus merges or multi-branch features, the engine searches along this linearized sequence.
-7. **GPU and IPC Isolation**:
-   - `git worktree` isolates file system trees across commits. However, subprocesses share the host's operating system, environment variables, GPU devices, and ports. If evaluations require complete resource sandboxing (e.g., fixed GPU memory, containerized filesystem), the user-provided eval command should invoke a container or sandbox wrapper (e.g., Docker, Apptainer).
-8. **Container Paths in Targets Configuration**:
-   - In the Docker setup, `targets.toml` paths (such as `repo_path = "/repos/..."`) specify paths inside the container environment, where `./repos` from the host is mounted to `/repos`.
 
