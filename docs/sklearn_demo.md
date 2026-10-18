@@ -19,9 +19,12 @@ Run the entire demo with a single command:
 ./scripts/run_sklearn_demo.sh
 ```
 
-Expected last line of output:
+By default, the script retains the generated repository in a temporary directory (or an optional path passed via `--keep` or positional argument) without deleting it, printing the path so the user can inspect it.
+
+Expected output ending:
 ```
 Culprit: 6f2ce80 c6: reduce n_estimators to 2 for faster training (regression) (evaluated 6 commits)
+Demo repository kept at: /var/folders/.../sklearn_demo_...
 ```
 
 ---

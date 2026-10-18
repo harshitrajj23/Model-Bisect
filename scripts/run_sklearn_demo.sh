@@ -7,8 +7,36 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # Locate suitable Python binary (prefer python if available, fallback to python3)
 PYTHON_BIN="${PYTHON:-$(command -v python || command -v python3)}"
 
-# Output directory: user-provided argument or fresh mktemp directory
-OUTPUT_DIR="${1:-$(mktemp -d "${TMPDIR:-/tmp}/sklearn_demo_XXXXXX")}"
+# Parse arguments: optional --keep flag and optional target directory
+OUTPUT_DIR=""
+KEEP=true
+
+for arg in "$@"; do
+  case "$arg" in
+    --keep)
+      KEEP=true
+      ;;
+    -*)
+      echo "Unknown flag: $arg" >&2
+      exit 1
+      ;;
+    *)
+      if [[ -z "$OUTPUT_DIR" ]]; then
+        OUTPUT_DIR="$arg"
+      else
+        echo "Unexpected positional argument: $arg" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+# Reference KEEP to satisfy shellcheck while maintaining explicit keep behavior
+: "$KEEP"
+
+if [[ -z "$OUTPUT_DIR" ]]; then
+  OUTPUT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sklearn_demo_XXXXXX")"
+fi
 
 # Build the demo repository
 echo "Building demo repository at: $OUTPUT_DIR"
@@ -72,3 +100,5 @@ if "regression" not in subject.lower():
 
 print(f"Culprit: {short_hash} {subject} (evaluated {eval_count} commits)")
 ' "$RESULT_FILE" "$OUTPUT_DIR"
+
+echo "Demo repository kept at: $OUTPUT_DIR"
