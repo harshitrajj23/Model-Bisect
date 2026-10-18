@@ -107,7 +107,7 @@ Wiring verified on PR #1 (test/action-smoke) using a synthetic eval. Run 3911445
 - For the live PR view and comments, see [docs/action_pr_live.txt](action_pr_live.txt).
 - For the run verification summary confirming no failed steps, see [docs/action_run_status.txt](action_run_status.txt).
 - *Note on PR comments*: [docs/action_pr_comment.txt](action_pr_comment.txt) contains the two error comments from earlier runs followed by the successful one, so readers are not misled.
-- For the real scikit-learn model Action run log and PR comments on PR #2, see [docs/action_sklearn_run_log.txt](action_sklearn_run_log.txt) and [docs/action_sklearn_pr.txt](action_sklearn_pr.txt).
+- For the real scikit-learn model Action run log and PR comments on PR #2 (Run 39152434251, which concluded failure with status error because the base commit lacked model/train.py), see [docs/action_sklearn_run_log.txt](action_sklearn_run_log.txt) and [docs/action_sklearn_pr.txt](action_sklearn_pr.txt).
 
 ### Security note
 The eval command is read from `.model-bisect.toml` on the PR head, so a PR author can change what runs on the CI runner. Acceptable for a private repo with trusted collaborators. Before any public release, read the config from the base branch.
