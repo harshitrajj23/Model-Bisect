@@ -255,7 +255,8 @@
 
     .job-item.selected {
       border-color: var(--accent);
-      background: rgba(59, 130, 246, 0.08);
+      border-left: 3px solid var(--accent);
+      background: rgba(59, 130, 246, 0.1);
       box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
     }
 
@@ -280,6 +281,8 @@
       font-size: 0.72rem;
       color: var(--text-dim);
       margin-top: 0.2rem;
+      flex-wrap: wrap;
+      gap: 0.25rem;
     }
 
     /* Status Pills */
@@ -495,12 +498,15 @@
       padding: 0.4rem 0.75rem;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.06);
+      max-width: 100%;
+      flex-wrap: wrap;
     }
 
     .culprit-full-hash {
       font-family: var(--font-mono);
       font-size: 0.85rem;
       color: var(--text-sub);
+      word-break: break-all;
     }
 
     .btn-copy {
@@ -757,6 +763,13 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+      }
+      .pulse-dot {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+      .skeleton-bar {
+        animation: none !important;
       }
     }
   </style>
@@ -1479,10 +1492,13 @@
           const px = (cx / width) * svgRect.width;
           const py = (cy / height) * svgRect.height;
 
-          let left = px - 40;
-          let top = py - 60;
+          let left = px - 45;
+          let top = py - 70;
+          if (top < 10) {
+            top = py + 18; // flip below point if near top boundary
+          }
           if (left < 10) left = 10;
-          if (left + 150 > rect.width) left = rect.width - 160;
+          if (left + 165 > rect.width) left = Math.max(10, rect.width - 175);
 
           tooltip.style.left = `${left}px`;
           tooltip.style.top = `${top}px`;

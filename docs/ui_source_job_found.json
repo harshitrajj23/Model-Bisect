@@ -1,0 +1,70 @@
+{
+  "id": "776d365a-72ca-4917-9ce3-49db5922ff75",
+  "target": "sklearn_demo_target",
+  "good_commit": "040b2fd8aa77f6948705f2c371db922f6c96488f",
+  "bad_commit": "058be493831f50b9656a73b3001cecd87c60c524",
+  "threshold_override": null,
+  "status": "done",
+  "created_at": "2026-10-18T14:05:00.385375+00:00",
+  "started_at": "2026-10-18T14:05:00.694047+00:00",
+  "finished_at": "2026-10-18T14:05:05.721593+00:00",
+  "progress_count": 6,
+  "result": {
+    "status": "found",
+    "first_bad_commit": "85f2bce386aa34eb93232b9cabf0b19b5037f98a",
+    "evaluated_commits": [
+      {
+        "commit": "040b2fd8aa77f6948705f2c371db922f6c96488f",
+        "metric": 0.958041958041958,
+        "status": "good",
+        "duration": 1.0462904590021935,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "0e4c46f4084e04cc04880a149f9b5971cd9e8153",
+        "metric": 0.958041958041958,
+        "status": "good",
+        "duration": 0.8202874579947093,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "d413a168b3131e6119fe3343391c5ca6efe43677",
+        "metric": 0.958041958041958,
+        "status": "good",
+        "duration": 0.9963556669972604,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "85f2bce386aa34eb93232b9cabf0b19b5037f98a",
+        "metric": 0.8881118881118881,
+        "status": "bad",
+        "duration": 0.6644727919992874,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "fa031c02c316cef87d5fec77bd1e74b988c01223",
+        "metric": 0.8881118881118881,
+        "status": "bad",
+        "duration": 0.7053592919983203,
+        "skip_reason": null,
+        "eval_runs": null
+      },
+      {
+        "commit": "058be493831f50b9656a73b3001cecd87c60c524",
+        "metric": 0.8881118881118881,
+        "status": "bad",
+        "duration": 0.6795874579984229,
+        "skip_reason": null,
+        "eval_runs": null
+      }
+    ],
+    "total_eval_count": 6,
+    "error_message": null,
+    "monotonicity_verified": true
+  },
+  "error_message": null
+}
