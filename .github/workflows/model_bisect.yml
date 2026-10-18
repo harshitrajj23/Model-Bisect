@@ -1,4 +1,4 @@
-# Untested: not yet run on a real pull request.
+# Smoke-tested on PR #1 with a synthetic eval, run 39114453801.
 name: Model Regression Bisect
 
 on:

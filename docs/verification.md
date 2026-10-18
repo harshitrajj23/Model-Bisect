@@ -98,9 +98,25 @@ pytest --collect-only -q > docs/collect_output.txt
 
 ---
 
-## 6. Items Not Run
+## 6. GitHub Action Verification & Status
+
+### GitHub Action Status
+Wiring verified on PR #1 (test/action-smoke) using a synthetic eval. Run 39114453801 concluded success with status `found`. Two earlier runs on the same PR failed because the base endpoint had no eval script; the PR branch was fixed and the base was not changed. Real model evaluation in CI: not run.
+
+- For the full action run log, see [docs/action_run_log.txt](action_run_log.txt).
+- For the live PR view and comments, see [docs/action_pr_live.txt](action_pr_live.txt).
+- For the run verification summary confirming no failed steps, see [docs/action_run_status.txt](action_run_status.txt).
+- *Note on PR comments*: [docs/action_pr_comment.txt](action_pr_comment.txt) contains the two error comments from earlier runs followed by the successful one, so readers are not misled.
+
+### Security note
+The eval command is read from `.model-bisect.toml` on the PR head, so a PR author can change what runs on the CI runner. Acceptable for a private repo with trusted collaborators. Before any public release, read the config from the base branch.
+
+---
+
+## 7. Items Not Run
 
 The following components were not executed in this verification pass:
-1. **GitHub Action Live PR Trigger**: Run once on a test PR, run ID 39114453801, conclusion success (see [docs/action_run_log.txt](action_run_log.txt) and [docs/action_pr_comment.txt](action_pr_comment.txt)).
+1. **Real model evaluation in CI**: Not run; workflow wiring was verified using a synthetic evaluation script.
 2. **GPU Evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
 3. **Multi-Host Deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
+

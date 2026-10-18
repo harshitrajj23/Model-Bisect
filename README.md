@@ -16,7 +16,7 @@ Model Bisect is a v0.1 prototype.
 - **Docker Compose stack**: API and worker services run in Docker Compose on a single macOS host, and API responds to health checks (`docs/compose_ps.txt`, `docs/health.json`).
 
 ### Not run
-- **GitHub Action live PR trigger**: run once on a test PR, run ID 39114453801, conclusion success.
+- **Real model evaluation in CI**: Not run; workflow wiring was verified on PR #1 (`test/action-smoke`) using a synthetic eval (run ID 39114453801, conclusion success).
 - **GPU evaluation**: Not run on GPU hardware; all evaluations executed using CPU test models.
 - **Multi-host deployment**: Not run across a multi-host cluster; service was evaluated locally via single-host Docker Compose.
 
@@ -57,6 +57,7 @@ Security is a primary design constraint for the Model Bisect service:
    - The `/repos` volume mount is **writable** because `git worktree add` creates metadata records under `.git/worktrees/<name>/` inside the target repository. A read-only mount causes worktree creation to fail.
    - Evaluation commands run with write access to the mounted repositories.
    - A crashed or unexpectedly terminated run can leave behind worktree metadata. At startup, the worker automatically runs `git worktree prune` on each configured target's repository before processing jobs and logs what it removed.
+8. **Security note (GitHub Action trust boundary)**: The eval command is read from `.model-bisect.toml` on the PR head, so a PR author can change what runs on the CI runner. Acceptable for a private repo with trusted collaborators. Before any public release, read the config from the base branch.
 
 ---
 
