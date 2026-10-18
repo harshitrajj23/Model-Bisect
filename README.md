@@ -239,4 +239,6 @@ As documented in [`docs/verification.md`](docs/verification.md):
    - Commit history between `good_commit` and `bad_commit` is linearized topologically using `git rev-list --topo-order --reverse`. For octopus merges or multi-branch features, the engine searches along this linearized sequence.
 7. **GPU and IPC Isolation**:
    - `git worktree` isolates file system trees across commits. However, subprocesses share the host's operating system, environment variables, GPU devices, and ports. If evaluations require complete resource sandboxing (e.g., fixed GPU memory, containerized filesystem), the user-provided eval command should invoke a container or sandbox wrapper (e.g., Docker, Apptainer).
+8. **Container Paths in Targets Configuration**:
+   - In the Docker setup, `targets.toml` paths (such as `repo_path = "/repos/..."`) specify paths inside the container environment, where `./repos` from the host is mounted to `/repos`.
 
