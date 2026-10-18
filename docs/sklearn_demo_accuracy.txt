@@ -1,0 +1,8 @@
+Commit   Hash                                       Accuracy   Subject
+----------------------------------------------------------------------
+c0       040b2fd8aa77f6948705f2c371db922f6c96488f   0.9580     c0: initial model with n_estimators=200
+c2       4a26b105da2d44c5aad1765f45f00c85a5916974   0.9580     c2: clarify train-test split strategy
+c5       d413a168b3131e6119fe3343391c5ca6efe43677   0.9580     c5: verify hyperparameter comments before release
+c6       85f2bce386aa34eb93232b9cabf0b19b5037f98a   0.8881     c6: reduce n_estimators to 2 for faster training (regression)
+c8       fa031c02c316cef87d5fec77bd1e74b988c01223   0.8881     c8: document quick training mode
+c11      058be493831f50b9656a73b3001cecd87c60c524   0.8881     c11: final cosmetic polish and notes
