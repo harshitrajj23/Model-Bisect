@@ -5,8 +5,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-N_ESTIMATORS = 200
-# Baseline model with n_estimators=200
+N_ESTIMATORS = 2
+# Planted regression: reduce n_estimators to 2
 
 def main():
     data = load_breast_cancer()
