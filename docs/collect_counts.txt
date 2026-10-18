@@ -1,2 +1,2 @@
-64 tests collected in 1.22s
-62/64 tests collected (2 deselected) in 0.82s
+65 tests collected in 1.22s
+62/65 tests collected (3 deselected) in 0.90s
