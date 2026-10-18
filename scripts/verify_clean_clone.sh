@@ -33,6 +33,7 @@ echo "Using Python binary: $(command -v "$PYTHON_BIN")"
 # Create virtual environment and install requirements
 echo "Creating clean virtual environment..."
 "$PYTHON_BIN" -m venv "$TMP_DIR/repo/.venv"
+# shellcheck source=/dev/null
 source "$TMP_DIR/repo/.venv/bin/activate"
 
 echo "Upgrading pip and installing requirements from requirements.txt..."
