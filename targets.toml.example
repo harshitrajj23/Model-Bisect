@@ -1,20 +1,41 @@
 # Example targets configuration for Model Bisect server
 
-[targets.nlp_sentiment]
-repo_path = "/repos/nlp_sentiment"
-eval_command = "python eval.py"
+[targets.sklearn_demo_target]
+repo_path = "/repos/sklearn_demo"
+eval_command = "python train.py"
 metric_name = "accuracy"
-threshold = 0.90
+threshold = 0.95
 direction = "higher"
 valid_range = [0.0, 1.0]
-timeout = 120.0
+timeout = 60.0
 repeat_count = 1
 
-[targets.latency_benchmark]
-repo_path = "/repos/nlp_sentiment"
+[targets.digits_target]
+repo_path = "/repos/digits_classifier"
+eval_command = "python train.py"
+metric_name = "accuracy"
+threshold = 0.94
+direction = "higher"
+valid_range = [0.0, 1.0]
+timeout = 30.0
+repeat_count = 1
+
+[targets.latency_target]
+repo_path = "/repos/latency_benchmark"
 eval_command = "python benchmark.py"
 metric_name = "latency_ms"
-threshold = 50.0
+threshold = 30.0
 direction = "lower"
-timeout = 60.0
-repeat_count = 3
+valid_range = [0.0, 1000.0]
+timeout = 30.0
+repeat_count = 1
+
+[targets.housing_target]
+repo_path = "/repos/housing_regressor"
+eval_command = "python train.py"
+metric_name = "r2_score"
+threshold = 0.40
+direction = "higher"
+valid_range = [-1.0, 1.0]
+timeout = 30.0
+repeat_count = 1
