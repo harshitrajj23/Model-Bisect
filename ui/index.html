@@ -844,6 +844,7 @@
 
   <script>
     // State
+    const API_BASE = (window.location.port === '8000' || !window.location.port) ? '' : 'http://127.0.0.1:8000';
     let currentJobId = null;
     let pollIntervalId = null;
     let jobsCache = [];
@@ -920,7 +921,7 @@
     // Load jobs list
     async function fetchJobs() {
       try {
-        const res = await fetch('/jobs');
+        const res = await fetch(`${API_BASE}/jobs`);
         if (!res.ok) return;
         const data = await res.json();
         jobsCache = Array.isArray(data) ? data : [];
@@ -997,7 +998,7 @@
     // Fetch single job details
     async function fetchJobDetails(jobId) {
       try {
-        const res = await fetch(`/jobs/${jobId}`);
+        const res = await fetch(`${API_BASE}/jobs/${jobId}`);
         if (!res.ok) {
           renderErrorState(`Failed to load job ${jobId}`);
           return;
@@ -1033,7 +1034,7 @@
 
       pollIntervalId = setInterval(async () => {
         try {
-          const res = await fetch(`/jobs/${jobId}`);
+          const res = await fetch(`${API_BASE}/jobs/${jobId}`);
           if (!res.ok) return;
           const job = await res.json();
 
@@ -1548,7 +1549,7 @@
       submitBtn.disabled = true;
 
       try {
-        const res = await fetch('/jobs', {
+        const res = await fetch(`${API_BASE}/jobs`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
