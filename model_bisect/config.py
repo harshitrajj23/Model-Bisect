@@ -78,13 +78,36 @@ def get_validated_target(
 
     target = targets[target_name]
     root = Path(repo_root).resolve() if repo_root else get_default_repo_root()
-    repo_path = Path(target.repo_path).resolve()
+    repo_path = Path(target.repo_path)
 
-    try:
-        repo_path.relative_to(root)
-    except ValueError:
+    resolved_path: Path | None = None
+    candidates: list[Path] = []
+    if repo_path.is_absolute():
+        candidates.append(repo_path)
+        parts = repo_path.parts
+        if len(parts) > 2 and parts[1] == "repos":
+            candidates.append(root / Path(*parts[1:]))
+            candidates.append(root / Path(*parts[2:]))
+    else:
+        candidates.append(root / repo_path)
+        candidates.append(repo_path)
+
+    for cand in candidates:
+        cand_resolved = cand.resolve()
+        try:
+            cand_resolved.relative_to(root)
+            if cand_resolved.exists():
+                resolved_path = cand_resolved
+                break
+            if resolved_path is None:
+                resolved_path = cand_resolved
+        except ValueError:
+            continue
+
+    if resolved_path is None:
         raise RepoPathNotAllowedError(
             f"Target repository path is not inside allowlisted root directory"
         )
 
-    return target
+    return target.model_copy(update={"repo_path": str(resolved_path)})
+
