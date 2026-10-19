@@ -5,6 +5,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
+      - DATABASE_URL=${DATABASE_URL:-}
       - MODEL_BISECT_DB_PATH=/data/model_bisect.db
       - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
       - MODEL_BISECT_REPO_ROOT=/repos
@@ -26,6 +27,7 @@ services:
     build: .
     command: python -m model_bisect.worker
     environment:
+      - DATABASE_URL=${DATABASE_URL:-}
       - MODEL_BISECT_DB_PATH=/data/model_bisect.db
       - MODEL_BISECT_TARGETS_FILE=/app/targets.toml
       - MODEL_BISECT_REPO_ROOT=/repos

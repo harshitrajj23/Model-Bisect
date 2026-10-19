@@ -6,8 +6,46 @@ import sqlite3
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 from model_bisect.models import BisectResult, JobResponse, JobStatus
+
+
+def is_postgres(target: Path | str | None = None) -> bool:
+    """Return True if the target or environment specifies a PostgreSQL database."""
+    if target is not None:
+        s = str(target).strip()
+        return s.startswith("postgresql://") or s.startswith("postgres://")
+    env_url = os.environ.get("DATABASE_URL") or os.environ.get("MODEL_BISECT_DATABASE_URL")
+    if env_url:
+        s = env_url.strip()
+        return s.startswith("postgresql://") or s.startswith("postgres://")
+    raw = os.environ.get("MODEL_BISECT_DB_PATH", "")
+    return raw.strip().startswith("postgresql://") or raw.strip().startswith("postgres://")
+
+
+def get_pg_url(db_path: Path | str | None = None) -> str:
+    """Return PostgreSQL connection URL from argument or environment."""
+    if db_path is not None:
+        s = str(db_path).strip()
+        if s.startswith("postgresql://") or s.startswith("postgres://"):
+            return s
+    url = (
+        os.environ.get("DATABASE_URL")
+        or os.environ.get("MODEL_BISECT_DATABASE_URL")
+        or os.environ.get("MODEL_BISECT_DB_PATH", "")
+    ).strip()
+    if not url:
+        raise ValueError("No PostgreSQL connection URL configured in environment or arguments")
+    return url
+
+
+def get_pg_connection(db_path: Path | str | None = None):
+    """Create a new PostgreSQL connection with RealDictCursor."""
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    url = get_pg_url(db_path)
+    return psycopg2.connect(url, cursor_factory=RealDictCursor, connect_timeout=15)
 
 
 def get_db_path() -> Path:
@@ -16,8 +54,11 @@ def get_db_path() -> Path:
     return Path(raw).resolve()
 
 
-def get_connection(db_path: Path | str | None = None) -> sqlite3.Connection:
-    """Create a new SQLite connection configured with WAL mode and row factory."""
+def get_connection(db_path: Path | str | None = None):
+    """Create a new database connection (PostgreSQL if configured, otherwise SQLite)."""
+    if is_postgres(db_path):
+        return get_pg_connection(db_path)
+
     path = Path(db_path).resolve() if db_path else get_db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(
@@ -33,8 +74,51 @@ def get_connection(db_path: Path | str | None = None) -> sqlite3.Connection:
     return conn
 
 
-def init_db(db_path: Path | str | None = None) -> None:
-    """Create jobs schema if not already present."""
+def _row_to_job_response(row: Any) -> JobResponse:
+    """Convert a database row (sqlite3.Row or psycopg2 RealDictRow) to a JobResponse model."""
+    res_obj: BisectResult | None = None
+    result_val = row["result_json"]
+    if result_val:
+        if isinstance(result_val, dict):
+            try:
+                res_obj = BisectResult.model_validate(result_val)
+            except Exception:
+                res_obj = None
+        else:
+            try:
+                res_obj = BisectResult.model_validate_json(str(result_val))
+            except Exception:
+                res_obj = None
+
+    def _fmt_ts(val: Any) -> str | None:
+        if val is None:
+            return None
+        if hasattr(val, "isoformat"):
+            return val.isoformat()
+        return str(val)
+
+    return JobResponse(
+        id=str(row["id"]),
+        target=row["target"],
+        good_commit=row["good_commit"],
+        bad_commit=row["bad_commit"],
+        threshold_override=row["threshold_override"],
+        status=row["status"],
+        created_at=_fmt_ts(row["created_at"]) or "",
+        started_at=_fmt_ts(row["started_at"]),
+        finished_at=_fmt_ts(row["finished_at"]),
+        progress_count=row["progress_count"],
+        result=res_obj,
+        error_message=row["error_message"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# SQLite Implementations
+# ---------------------------------------------------------------------------
+
+
+def _sqlite_init_db(db_path: Path | str | None = None) -> None:
     conn = get_connection(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -67,39 +151,13 @@ def init_db(db_path: Path | str | None = None) -> None:
         conn.close()
 
 
-def _row_to_job_response(row: sqlite3.Row) -> JobResponse:
-    """Convert a database row to a JobResponse model."""
-    res_obj: BisectResult | None = None
-    if row["result_json"]:
-        try:
-            res_obj = BisectResult.model_validate_json(row["result_json"])
-        except Exception:
-            res_obj = None
-
-    return JobResponse(
-        id=row["id"],
-        target=row["target"],
-        good_commit=row["good_commit"],
-        bad_commit=row["bad_commit"],
-        threshold_override=row["threshold_override"],
-        status=row["status"],
-        created_at=row["created_at"],
-        started_at=row["started_at"],
-        finished_at=row["finished_at"],
-        progress_count=row["progress_count"],
-        result=res_obj,
-        error_message=row["error_message"],
-    )
-
-
-def create_job(
+def _sqlite_create_job(
     target: str,
     good_commit: str,
     bad_commit: str,
     threshold: float | None = None,
     db_path: Path | str | None = None,
 ) -> JobResponse:
-    """Insert a new job in queued status."""
     conn = get_connection(db_path)
     job_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
@@ -128,8 +186,7 @@ def create_job(
     return res
 
 
-def get_job(job_id: str, db_path: Path | str | None = None) -> JobResponse | None:
-    """Retrieve job details by ID."""
+def _sqlite_get_job(job_id: str, db_path: Path | str | None = None) -> JobResponse | None:
     conn = get_connection(db_path)
     try:
         cur = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,))
@@ -141,12 +198,11 @@ def get_job(job_id: str, db_path: Path | str | None = None) -> JobResponse | Non
         conn.close()
 
 
-def list_jobs(
+def _sqlite_list_jobs(
     status: JobStatus | None = None,
     limit: int = 20,
     db_path: Path | str | None = None,
 ) -> list[JobResponse]:
-    """List most recent jobs, newest first."""
     conn = get_connection(db_path)
     try:
         if status:
@@ -165,11 +221,7 @@ def list_jobs(
         conn.close()
 
 
-def claim_next_job(db_path: Path | str | None = None) -> JobResponse | None:
-    """Atomically claim the oldest queued job and transition it to running.
-
-    Guarantees that only one worker claims the job even in concurrent worker races.
-    """
+def _sqlite_claim_next_job(db_path: Path | str | None = None) -> JobResponse | None:
     conn = get_connection(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -200,8 +252,7 @@ def claim_next_job(db_path: Path | str | None = None) -> JobResponse | None:
         conn.close()
 
 
-def increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
-    """Increment progress_count by 1 for a job."""
+def _sqlite_increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
     conn = get_connection(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -217,12 +268,11 @@ def increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
         conn.close()
 
 
-def finish_job(
+def _sqlite_finish_job(
     job_id: str,
     result: BisectResult,
     db_path: Path | str | None = None,
 ) -> None:
-    """Mark a running job as done with its serialized BisectResult."""
     conn = get_connection(db_path)
     now = datetime.now(timezone.utc).isoformat()
     result_json = result.model_dump_json()
@@ -244,12 +294,11 @@ def finish_job(
         conn.close()
 
 
-def fail_job(
+def _sqlite_fail_job(
     job_id: str,
     error_message: str,
     db_path: Path | str | None = None,
 ) -> None:
-    """Mark a job as failed with an error message."""
     conn = get_connection(db_path)
     now = datetime.now(timezone.utc).isoformat()
     try:
@@ -270,8 +319,7 @@ def fail_job(
         conn.close()
 
 
-def fail_stale_running_jobs(db_path: Path | str | None = None) -> int:
-    """Mark any jobs left in 'running' by a crashed/dead worker as failed."""
+def _sqlite_fail_stale_running_jobs(db_path: Path | str | None = None) -> int:
     conn = get_connection(db_path)
     now = datetime.now(timezone.utc).isoformat()
     msg = "Worker terminated unexpectedly while job was running"
@@ -295,8 +343,7 @@ def fail_stale_running_jobs(db_path: Path | str | None = None) -> int:
         conn.close()
 
 
-def check_db_health(db_path: Path | str | None = None) -> bool:
-    """Verify SQLite database connectivity."""
+def _sqlite_check_db_health(db_path: Path | str | None = None) -> bool:
     try:
         conn = get_connection(db_path)
         cur = conn.execute("SELECT 1")
@@ -305,3 +352,343 @@ def check_db_health(db_path: Path | str | None = None) -> bool:
         return val == 1
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------------------
+# PostgreSQL / Supabase Implementations
+# ---------------------------------------------------------------------------
+
+
+def _pg_init_db(db_path: Path | str | None = None) -> None:
+    conn = get_pg_connection(db_path)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id TEXT PRIMARY KEY,
+                    target TEXT NOT NULL,
+                    good_commit TEXT NOT NULL,
+                    bad_commit TEXT NOT NULL,
+                    threshold_override DOUBLE PRECISION,
+                    status TEXT NOT NULL CHECK(status IN ('queued', 'running', 'done', 'failed')),
+                    created_at TIMESTAMPTZ NOT NULL,
+                    started_at TIMESTAMPTZ,
+                    finished_at TIMESTAMPTZ,
+                    progress_count INTEGER NOT NULL DEFAULT 0,
+                    result_json JSONB,
+                    error_message TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_jobs_status_created ON jobs(status, created_at);
+                """
+            )
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_create_job(
+    target: str,
+    good_commit: str,
+    bad_commit: str,
+    threshold: float | None = None,
+    db_path: Path | str | None = None,
+) -> JobResponse:
+    conn = get_pg_connection(db_path)
+    job_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO jobs (
+                    id, target, good_commit, bad_commit, threshold_override,
+                    status, created_at, started_at, finished_at, progress_count,
+                    result_json, error_message
+                ) VALUES (%s, %s, %s, %s, %s, 'queued', %s, NULL, NULL, 0, NULL, NULL)
+                RETURNING *;
+                """,
+                (job_id, target, good_commit, bad_commit, threshold, now),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return _row_to_job_response(row)
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_get_job(job_id: str, db_path: Path | str | None = None) -> JobResponse | None:
+    conn = get_pg_connection(db_path)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            return _row_to_job_response(row)
+    finally:
+        conn.close()
+
+
+def _pg_list_jobs(
+    status: JobStatus | None = None,
+    limit: int = 20,
+    db_path: Path | str | None = None,
+) -> list[JobResponse]:
+    conn = get_pg_connection(db_path)
+    try:
+        with conn.cursor() as cur:
+            if status:
+                cur.execute(
+                    "SELECT * FROM jobs WHERE status = %s ORDER BY created_at DESC LIMIT %s",
+                    (status, limit),
+                )
+            else:
+                cur.execute(
+                    "SELECT * FROM jobs ORDER BY created_at DESC LIMIT %s",
+                    (limit,),
+                )
+            rows = cur.fetchall()
+            return [_row_to_job_response(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def _pg_claim_next_job(db_path: Path | str | None = None) -> JobResponse | None:
+    conn = get_pg_connection(db_path)
+    now = datetime.now(timezone.utc)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'running', started_at = %s
+                WHERE id = (
+                    SELECT id FROM jobs
+                    WHERE status = 'queued'
+                    ORDER BY created_at ASC
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                )
+                RETURNING *;
+                """,
+                (now,),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            if not row:
+                return None
+            return _row_to_job_response(row)
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
+    conn = get_pg_connection(db_path)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET progress_count = progress_count + 1 WHERE id = %s",
+                (job_id,),
+            )
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_finish_job(
+    job_id: str,
+    result: BisectResult,
+    db_path: Path | str | None = None,
+) -> None:
+    from psycopg2.extras import Json
+
+    conn = get_pg_connection(db_path)
+    now = datetime.now(timezone.utc)
+    result_dict = result.model_dump()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'done', result_json = %s, finished_at = %s
+                WHERE id = %s AND status = 'running'
+                """,
+                (Json(result_dict), now, job_id),
+            )
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_fail_job(
+    job_id: str,
+    error_message: str,
+    db_path: Path | str | None = None,
+) -> None:
+    conn = get_pg_connection(db_path)
+    now = datetime.now(timezone.utc)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'failed', error_message = %s, finished_at = %s
+                WHERE id = %s
+                """,
+                (error_message, now, job_id),
+            )
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_fail_stale_running_jobs(db_path: Path | str | None = None) -> int:
+    conn = get_pg_connection(db_path)
+    now = datetime.now(timezone.utc)
+    msg = "Worker terminated unexpectedly while job was running"
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'failed', error_message = %s, finished_at = %s
+                WHERE status = 'running'
+                """,
+                (msg, now),
+            )
+            count = cur.rowcount
+            conn.commit()
+            return count
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _pg_check_db_health(db_path: Path | str | None = None) -> bool:
+    try:
+        conn = get_pg_connection(db_path)
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            val = cur.fetchone()
+            conn.close()
+            return val is not None and list(val.values())[0] == 1
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Public Facade (Dispatches to PostgreSQL or SQLite based on configuration)
+# ---------------------------------------------------------------------------
+
+
+def init_db(db_path: Path | str | None = None) -> None:
+    """Create jobs schema if not already present."""
+    if is_postgres(db_path):
+        _pg_init_db(db_path)
+    else:
+        _sqlite_init_db(db_path)
+
+
+def create_job(
+    target: str,
+    good_commit: str,
+    bad_commit: str,
+    threshold: float | None = None,
+    db_path: Path | str | None = None,
+) -> JobResponse:
+    """Insert a new job in queued status."""
+    if is_postgres(db_path):
+        return _pg_create_job(target, good_commit, bad_commit, threshold, db_path)
+    return _sqlite_create_job(target, good_commit, bad_commit, threshold, db_path)
+
+
+def get_job(job_id: str, db_path: Path | str | None = None) -> JobResponse | None:
+    """Retrieve job details by ID."""
+    if is_postgres(db_path):
+        return _pg_get_job(job_id, db_path)
+    return _sqlite_get_job(job_id, db_path)
+
+
+def list_jobs(
+    status: JobStatus | None = None,
+    limit: int = 20,
+    db_path: Path | str | None = None,
+) -> list[JobResponse]:
+    """List most recent jobs, newest first."""
+    if is_postgres(db_path):
+        return _pg_list_jobs(status, limit, db_path)
+    return _sqlite_list_jobs(status, limit, db_path)
+
+
+def claim_next_job(db_path: Path | str | None = None) -> JobResponse | None:
+    """Atomically claim the oldest queued job and transition it to running."""
+    if is_postgres(db_path):
+        return _pg_claim_next_job(db_path)
+    return _sqlite_claim_next_job(db_path)
+
+
+def increment_progress(job_id: str, db_path: Path | str | None = None) -> None:
+    """Increment progress_count by 1 for a job."""
+    if is_postgres(db_path):
+        _pg_increment_progress(job_id, db_path)
+    else:
+        _sqlite_increment_progress(job_id, db_path)
+
+
+def finish_job(
+    job_id: str,
+    result: BisectResult,
+    db_path: Path | str | None = None,
+) -> None:
+    """Mark a running job as done with its serialized BisectResult."""
+    if is_postgres(db_path):
+        _pg_finish_job(job_id, result, db_path)
+    else:
+        _sqlite_finish_job(job_id, result, db_path)
+
+
+def fail_job(
+    job_id: str,
+    error_message: str,
+    db_path: Path | str | None = None,
+) -> None:
+    """Mark a job as failed with an error message."""
+    if is_postgres(db_path):
+        _pg_fail_job(job_id, error_message, db_path)
+    else:
+        _sqlite_fail_job(job_id, error_message, db_path)
+
+
+def fail_stale_running_jobs(db_path: Path | str | None = None) -> int:
+    """Mark any jobs left in 'running' by a crashed/dead worker as failed."""
+    if is_postgres(db_path):
+        return _pg_fail_stale_running_jobs(db_path)
+    return _sqlite_fail_stale_running_jobs(db_path)
+
+
+def check_db_health(db_path: Path | str | None = None) -> bool:
+    """Verify database connectivity."""
+    if is_postgres(db_path):
+        return _pg_check_db_health(db_path)
+    return _sqlite_check_db_health(db_path)

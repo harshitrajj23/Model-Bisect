@@ -12,4 +12,6 @@ targets.toml
 repos/
 scratch_demo/
 model_bisect.db*
+.env
+.DS_Store
 
