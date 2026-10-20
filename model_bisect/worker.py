@@ -118,7 +118,21 @@ def execute_job(
             fail_job(job.id, result.error_message or "Bisect failed with error", db_path=db_path)
             logger.warning(f"Job {job.id} failed with bisect error: {result.error_message}")
         else:
-            finish_job(job.id, result, db_path=db_path)
+            culprit_subject = None
+            if result.first_bad_commit:
+                try:
+                    proc = subprocess.run(
+                        ["git", "-C", str(target.repo_path), "log", "-1", "--format=%s", result.first_bad_commit],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    if proc.returncode == 0:
+                        culprit_subject = proc.stdout.strip()
+                except Exception:
+                    pass
+
+            finish_job(job.id, result, db_path=db_path, culprit_subject=culprit_subject)
             logger.info(f"Job {job.id} completed with status: {result.status}")
     except Exception as e:
         logger.exception(f"Engine failure during job {job.id}: {e}")

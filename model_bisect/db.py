@@ -377,9 +377,27 @@ def _pg_init_db(db_path: Path | str | None = None) -> None:
                     finished_at TIMESTAMPTZ,
                     progress_count INTEGER NOT NULL DEFAULT 0,
                     result_json JSONB,
-                    error_message TEXT
+                    error_message TEXT,
+                    culprit_commit TEXT,
+                    culprit_subject TEXT,
+                    metric_name TEXT,
+                    total_eval_count INTEGER,
+                    monotonicity_verified BOOLEAN,
+                    duration_seconds DOUBLE PRECISION
                 );
                 CREATE INDEX IF NOT EXISTS idx_jobs_status_created ON jobs(status, created_at);
+
+                CREATE TABLE IF NOT EXISTS job_evaluations (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+                    commit_hash TEXT NOT NULL,
+                    metric_value DOUBLE PRECISION,
+                    status TEXT NOT NULL,
+                    duration DOUBLE PRECISION,
+                    skip_reason TEXT,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                );
+                CREATE INDEX IF NOT EXISTS idx_evaluations_job_id ON job_evaluations(job_id);
                 """
             )
             conn.commit()
@@ -400,6 +418,15 @@ def _pg_create_job(
     conn = get_pg_connection(db_path)
     job_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    m_name = None
+    try:
+        from model_bisect.config import load_targets
+        t_cfg = load_targets().get(target)
+        if t_cfg:
+            m_name = t_cfg.metric_name
+    except Exception:
+        pass
+
     try:
         with conn.cursor() as cur:
             cur.execute(
@@ -407,11 +434,11 @@ def _pg_create_job(
                 INSERT INTO jobs (
                     id, target, good_commit, bad_commit, threshold_override,
                     status, created_at, started_at, finished_at, progress_count,
-                    result_json, error_message
-                ) VALUES (%s, %s, %s, %s, %s, 'queued', %s, NULL, NULL, 0, NULL, NULL)
+                    result_json, error_message, metric_name
+                ) VALUES (%s, %s, %s, %s, %s, 'queued', %s, NULL, NULL, 0, NULL, NULL, %s)
                 RETURNING *;
                 """,
-                (job_id, target, good_commit, bad_commit, threshold, now),
+                (job_id, target, good_commit, bad_commit, threshold, now, m_name),
             )
             row = cur.fetchone()
             conn.commit()
@@ -512,22 +539,59 @@ def _pg_finish_job(
     job_id: str,
     result: BisectResult,
     db_path: Path | str | None = None,
+    culprit_subject: str | None = None,
 ) -> None:
     from psycopg2.extras import Json
 
     conn = get_pg_connection(db_path)
     now = datetime.now(timezone.utc)
     result_dict = result.model_dump()
+    culprit_commit = result.first_bad_commit
+    total_eval_count = result.total_eval_count
+    monotonicity_verified = result.monotonicity_verified
+
     try:
         with conn.cursor() as cur:
+            cur.execute("SELECT started_at FROM jobs WHERE id = %s", (job_id,))
+            st_row = cur.fetchone()
+            dur_sec = None
+            if st_row and st_row.get("started_at"):
+                dur_sec = (now - st_row["started_at"]).total_seconds()
+
             cur.execute(
                 """
                 UPDATE jobs
-                SET status = 'done', result_json = %s, finished_at = %s
+                SET status = 'done',
+                    result_json = %s,
+                    finished_at = %s,
+                    culprit_commit = %s,
+                    culprit_subject = %s,
+                    total_eval_count = %s,
+                    monotonicity_verified = %s,
+                    duration_seconds = %s
                 WHERE id = %s AND status = 'running'
                 """,
-                (Json(result_dict), now, job_id),
+                (
+                    Json(result_dict),
+                    now,
+                    culprit_commit,
+                    culprit_subject,
+                    total_eval_count,
+                    monotonicity_verified,
+                    dur_sec,
+                    job_id,
+                ),
             )
+
+            for ev in result.evaluated_commits:
+                cur.execute(
+                    """
+                    INSERT INTO job_evaluations (job_id, commit_hash, metric_value, status, duration, skip_reason)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (job_id, ev.commit, ev.metric, ev.status, ev.duration, ev.skip_reason),
+                )
+
             conn.commit()
     except Exception:
         conn.rollback()
@@ -660,10 +724,11 @@ def finish_job(
     job_id: str,
     result: BisectResult,
     db_path: Path | str | None = None,
+    culprit_subject: str | None = None,
 ) -> None:
     """Mark a running job as done with its serialized BisectResult."""
     if is_postgres(db_path):
-        _pg_finish_job(job_id, result, db_path)
+        _pg_finish_job(job_id, result, db_path, culprit_subject=culprit_subject)
     else:
         _sqlite_finish_job(job_id, result, db_path)
 
