@@ -10,6 +10,28 @@ from typing import Any, Generator
 from model_bisect.models import BisectResult, JobResponse, JobStatus
 
 
+def _load_env_file() -> None:
+    for candidate in [Path.cwd() / ".env", Path(__file__).resolve().parent.parent / ".env"]:
+        if candidate.is_file():
+            try:
+                with open(candidate, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or "=" not in line:
+                            continue
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip("'\"")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+                break
+            except Exception:
+                pass
+
+
+_load_env_file()
+
+
 def is_postgres(target: Path | str | None = None) -> bool:
     """Return True if the target or environment specifies a PostgreSQL database."""
     if target is not None:

@@ -22,8 +22,10 @@ def get_default_repo_root() -> Path:
     """Return the allowlisted repository root directory."""
     raw = os.environ.get("MODEL_BISECT_REPO_ROOT")
     if raw:
-        return Path(raw).resolve()
-    # Default to current working directory if not explicitly overridden
+        p = Path(raw).resolve()
+        if p.exists():
+            return p
+    # Default to current working directory if not explicitly overridden or path does not exist
     return Path.cwd().resolve()
 
 
@@ -99,10 +101,21 @@ def get_validated_target(
             if cand_resolved.exists():
                 resolved_path = cand_resolved
                 break
-            if resolved_path is None:
-                resolved_path = cand_resolved
         except ValueError:
             continue
+
+    if resolved_path is None:
+        # Fallback: check within workspace root if running outside container
+        ws_root = Path.cwd().resolve()
+        if ws_root != root:
+            for cand in [ws_root / repo_path, ws_root / "repos" / repo_path.name]:
+                if cand.exists():
+                    try:
+                        cand.resolve().relative_to(ws_root)
+                        resolved_path = cand.resolve()
+                        break
+                    except ValueError:
+                        pass
 
     if resolved_path is None:
         raise RepoPathNotAllowedError(
